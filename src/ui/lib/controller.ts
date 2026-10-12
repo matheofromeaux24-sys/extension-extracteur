@@ -288,3 +288,32 @@ export function cancelPicking(): void {
   if (analyzed) sendToTab(analyzed.tabId, { type: 'cancelPick' }).catch(() => undefined);
   setPagination({ picking: false });
 }
+
+// ---------------------------------------------------------------------------
+// Colonnes
+
+export function renameColumn(id: string, name: string): void {
+  const { result } = getState();
+  if (!result) return;
+  setState({ result: { ...result, columns: result.columns.map((c) => (c.id === id ? { ...c, name } : c)) } });
+}
+
+/** Supprime une colonne (les données restent en mémoire : « Annuler » la rétablit). */
+export function removeColumn(id: string): void {
+  const { result } = getState();
+  if (!result) return;
+  const index = result.columns.findIndex((c) => c.id === id);
+  if (index < 0) return;
+  const removed = result.columns[index];
+  setState({ result: { ...result, columns: result.columns.filter((c) => c.id !== id) } });
+  showToast(format(messages.table.removed, { name: removed.name }), 'success', {
+    label: messages.table.undo,
+    run: () => {
+      const current = getState().result;
+      if (!current || current.columns.some((c) => c.id === id)) return;
+      const columns = current.columns.slice();
+      columns.splice(Math.min(index, columns.length), 0, removed);
+      setState({ result: { ...current, columns }, toast: null });
+    },
+  });
+}

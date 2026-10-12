@@ -103,7 +103,7 @@ async function handle(msg: ContentRequest): Promise<ContentResponses[ContentRequ
     case 'clickLoadMore':
       return clickLoadMore(msg.selector, itemsOf(msg.list), msg.waitMs);
     case 'findNext':
-      return findNext(msg.selector);
+      return findNext(msg.selector, state.active ? currentItems(state.active) : []);
     case 'clickNext':
       return clickNext(msg.selector, itemsOf(msg.list), msg.waitMs);
     case 'pickElement': {

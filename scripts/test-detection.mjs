@@ -32,6 +32,13 @@ const cases = [
   { file: 'grand-volume.html', items: 10000, columns: ['Titre', 'Lien', 'Image', 'Téléphone', 'Email'], pagination: none },
   { file: 'fil-infini.html', items: 20, columns: ['Titre', 'Lien', 'Image', 'Date'], pagination: none },
   { file: 'fiche-avis.html', items: 8, columns: ['Lien', 'Prix', 'Image'], pagination: none },
+  {
+    file: 'meta-ad-library.html',
+    items: 10,
+    columns: ['Type de média', 'Vidéo', 'Image', 'Identifiant dans la bibliothèque'],
+    pagination: none,
+    values: { 'Type de média': ['Vidéo', 'Image', 'Carrousel', 'Vidéo', 'Texte', 'Image', 'Carrousel', 'Vidéo', 'Image', 'Image'] },
+  },
   { file: 'spa-pagination.html', items: 10, columns: ['Titre', 'Lien'], pagination: { ...none, next: 'Suivant ›' } },
 ];
 
@@ -51,6 +58,10 @@ for (const c of cases) {
     if (best.count !== c.items) problems.push(`${best.count} items au lieu de ${c.items}`);
     const missing = c.columns.filter((name) => !best.columns.some((col) => col.startsWith(name + ' [')));
     if (missing.length) problems.push(`colonnes manquantes : ${missing.join(', ')}`);
+  }
+  for (const [col, expected] of Object.entries(c.values ?? {})) {
+    const got = (best?.allRows ?? []).map((r) => r[col]);
+    if (JSON.stringify(got) !== JSON.stringify(expected)) problems.push(`${col} : ${JSON.stringify(got)}`);
   }
   if (JSON.stringify(res.pagination) !== JSON.stringify(c.pagination)) {
     problems.push(`pagination ${JSON.stringify(res.pagination)} au lieu de ${JSON.stringify(c.pagination)}`);

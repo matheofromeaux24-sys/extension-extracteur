@@ -150,7 +150,7 @@ export function pickList(highlighter: Highlighter, restore: () => void): Promise
   });
 }
 
-const TYPE_PREFERENCE: Record<Field['type'], number> = { text: 0, aria: 1, href: 2, src: 3 };
+const TYPE_PREFERENCE: Record<Field['type'], number> = { text: 0, aria: 1, href: 2, video: 3, src: 4 };
 
 /** Champ correspondant à l'élément cliqué : lui-même, un descendant, puis un ancêtre. */
 function fieldFor(el: Element, item: Element, track: Map<Element, Field[]>): Field | null {

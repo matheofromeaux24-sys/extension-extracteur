@@ -13,7 +13,7 @@ const NEXT_LOOSE = /(^|[\s(])(suivante?s?|next)([\s)›»→>]|$)/i;
 const NEXT_CLASS = /(^|[-_\s])(next|suivant|pagination-next|pager-next)([-_\s]|$)/i;
 const PAGINATION_CTX = /(pagination|pager|paging|page-?list|page-?numbers|pages)/i;
 const LOAD_MORE =
-  /((charger|afficher|voir|montrer)\s+(plus|davantage|la suite|d['’]autres|encore))|plus de (résultats|produits|articles|annonces)|^plus$|load more|show more|see more|view more|more results|mehr laden|cargar más|ver más/i;
+  /(^|[^\p{L}])((charger|afficher|voir|montrer)\s+(plus|davantage|la suite|d['’]autres|encore))|plus de (résultats|produits|articles|annonces)|^plus$|load more|show more|see more|view more|more results|mehr laden|cargar más|ver más/iu;
 
 const CLICKABLE = 'a, button, [role="button"], [role="link"], input[type="button"], input[type="submit"]';
 
@@ -89,6 +89,11 @@ function afterCurrentPage(): Element | null {
   return link && /^\d+$/.test(labelOf(link)) ? link : null;
 }
 
+/** Les boutons situés dans un item (flèches de carrousel, « En savoir plus » d'une carte…) ne paginent pas la liste. */
+function insideItems(el: Element, items: Element[]): boolean {
+  return items.some((it) => it.contains(el));
+}
+
 function bySelector(selector?: string): Element | null {
   if (!selector) return null;
   try {
@@ -99,7 +104,7 @@ function bySelector(selector?: string): Element | null {
   }
 }
 
-export function findNextElement(selector?: string): Element | null {
+export function findNextElement(selector?: string, items: Element[] = []): Element | null {
   const chosen = bySelector(selector);
   if (chosen) return chosen;
 
@@ -119,7 +124,7 @@ export function findNextElement(selector?: string): Element | null {
     if (NEXT_CLASS.test(cls)) score += 2;
     if (score > 0 && inPagination(el)) score += 2;
     if (/pr[ée]c[ée]dent|previous|prev\b|newer/i.test(`${text} ${aria} ${cls}`)) score = 0;
-    if (score < 4 || score <= bestScore || !isUsable(el)) continue;
+    if (score < 4 || score <= bestScore || !isUsable(el) || insideItems(el, items)) continue;
     if (el.tagName === 'A') {
       const href = el.getAttribute('href') || '';
       const abs = absoluteUrl(href, document.baseURI);
@@ -133,17 +138,17 @@ export function findNextElement(selector?: string): Element | null {
   return numbered && isUsable(numbered) ? numbered : null;
 }
 
-export function findLoadMoreElement(selector?: string, listEnd?: Element | null): Element | null {
+export function findLoadMoreElement(selector?: string, items: Element[] = []): Element | null {
   const chosen = bySelector(selector);
   if (chosen) return chosen;
   let best: Element | null = null;
   let bestScore = 0;
-  const endRect = listEnd?.getBoundingClientRect();
+  const endRect = items[items.length - 1]?.getBoundingClientRect();
   for (const el of Array.from(document.querySelectorAll(CLICKABLE)).slice(0, 4000)) {
     const text = labelOf(el);
     if (!text || text.length > 50 || !LOAD_MORE.test(text)) continue;
     if (el.tagName === 'A' && NEXT_EXACT.test(text)) continue;
-    if (!isUsable(el)) continue;
+    if (!isUsable(el) || insideItems(el, items)) continue;
     let score = 3;
     if (el.tagName === 'BUTTON' || el.getAttribute('role') === 'button') score += 1;
     if (endRect) {
@@ -174,8 +179,8 @@ export function scrollableAncestor(el: Element): Element | null {
 }
 
 export function detectPagination(items: Element[]): PaginationDetection {
-  const next = findNextElement();
-  const loadMore = findLoadMoreElement(undefined, items[items.length - 1]);
+  const next = findNextElement(undefined, items);
+  const loadMore = findLoadMoreElement(undefined, items);
   const inner = items.length ? scrollableAncestor(items[0]) : null;
   return {
     next: next ? control(next) : null,
@@ -184,8 +189,8 @@ export function detectPagination(items: Element[]): PaginationDetection {
   };
 }
 
-export function findNext(selector?: string): PageControl | null {
-  const el = findNextElement(selector);
+export function findNext(selector?: string, items: Element[] = []): PageControl | null {
+  const el = findNextElement(selector, items);
   return el ? control(el) : null;
 }
 
@@ -252,7 +257,7 @@ export async function clickLoadMore(
   waitMs: number,
 ): Promise<{ clicked: boolean; grew: boolean }> {
   const items = getItems();
-  const el = findLoadMoreElement(selector, items[items.length - 1]);
+  const el = findLoadMoreElement(selector, items);
   if (!el) return { clicked: false, grew: false };
   const scroller = items.length ? scrollableAncestor(items[0]) : null;
   const before = snapshot(items, scroller);
@@ -266,9 +271,9 @@ export async function clickNext(
   getItems: () => Element[],
   waitMs: number,
 ): Promise<{ clicked: boolean; changed: boolean }> {
-  const el = findNextElement(selector);
-  if (!el) return { clicked: false, changed: false };
   const items = getItems();
+  const el = findNextElement(selector, items);
+  if (!el) return { clicked: false, changed: false };
   const before = snapshot(items, null);
   humanClick(el);
   return { clicked: true, changed: await waitForChange(getItems, before, null, waitMs, 'replace') };

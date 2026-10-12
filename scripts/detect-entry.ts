@@ -25,6 +25,7 @@ import { detectPagination } from '../src/content/paginate';
         selector: c.selector,
         columns: columns.map((col) => `${col.name} [${col.kind}]`),
         rows: rows.slice(0, 2).map((r) => Object.fromEntries(columns.map((col) => [col.name, r[col.id]]))),
+        allRows: rows.slice(0, 50).map((r) => Object.fromEntries(columns.map((col) => [col.name, r[col.id]]))),
       };
     }),
   };

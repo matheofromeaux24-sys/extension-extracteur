@@ -2,10 +2,11 @@
 // ce qui reste fluide au-delà de 10 000 lignes.
 
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { memo, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
+import { removeColumn, renameColumn } from '../../lib/controller';
 import { messages } from '../../../shared/i18n';
 import type { Column, ColumnKind, Row } from '../../../shared/types';
-import { IconExternal, IconX } from '../ui/Icons';
+import { IconExternal, IconPencil, IconX } from '../ui/Icons';
 
 const ROW_HEIGHT = 36;
 const INDEX_WIDTH = 52;
@@ -15,6 +16,7 @@ const WIDTH: Record<ColumnKind, number> = {
   description: 320,
   text: 180,
   link: 220,
+  video: 220,
   image: 92,
   price: 110,
   date: 140,
@@ -26,6 +28,7 @@ const WIDTH: Record<ColumnKind, number> = {
 
 const KIND_BADGE: Partial<Record<ColumnKind, string>> = {
   link: '↗',
+  video: '▶',
   image: '▣',
   price: '€',
   date: '◷',
@@ -89,7 +92,7 @@ const Cell = memo(function Cell({
 }) {
   if (!value) return <span className="text-neutral-300 dark:text-neutral-700">—</span>;
   if (column.kind === 'image') return <ImageCell src={value} onPreview={onPreview} />;
-  if (column.kind === 'link') {
+  if (column.kind === 'link' || column.kind === 'video') {
     return (
       <span className="group flex min-w-0 items-center gap-1">
         <span className="truncate text-neutral-600 dark:text-neutral-300" title={value}>
@@ -113,6 +116,81 @@ const Cell = memo(function Cell({
     </span>
   );
 });
+
+/** En-tête de colonne : double-clic ou ✎ pour renommer, ✕ pour supprimer. */
+function HeaderCell({ column, width }: { column: Column; width: number }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(column.name);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
+  const save = () => {
+    setEditing(false);
+    const name = draft.trim();
+    if (name && name !== column.name) renameColumn(column.id, name);
+    else setDraft(column.name);
+  };
+  return (
+    <div
+      className="group flex shrink-0 items-center gap-1.5 border-l border-neutral-200/70 px-3 text-xs font-semibold text-neutral-700 dark:border-neutral-800 dark:text-neutral-200"
+      style={{ width, height: ROW_HEIGHT }}
+      title={editing ? undefined : column.name}
+      onDoubleClick={() => {
+        setDraft(column.name);
+        setEditing(true);
+      }}
+    >
+      {KIND_BADGE[column.kind] && <span className="text-[11px] font-normal text-neutral-400">{KIND_BADGE[column.kind]}</span>}
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={draft}
+          aria-label={messages.table.rename}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') save();
+            if (e.key === 'Escape') {
+              setDraft(column.name);
+              setEditing(false);
+            }
+          }}
+          className="h-6 min-w-0 flex-1 rounded-md border border-brand-500 bg-white px-1.5 text-xs font-semibold outline-none ring-2 ring-brand-500/20 dark:bg-neutral-900"
+        />
+      ) : (
+        <>
+          <span className="truncate" data-column-name>
+            {column.name}
+          </span>
+          <span className="ml-auto hidden shrink-0 items-center gap-0.5 group-hover:flex">
+            <button
+              type="button"
+              aria-label={`${messages.table.rename} : ${column.name}`}
+              title={messages.table.rename}
+              onClick={() => {
+                setDraft(column.name);
+                setEditing(true);
+              }}
+              className="rounded p-0.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-900 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+            >
+              <IconPencil width={12} height={12} />
+            </button>
+            <button
+              type="button"
+              aria-label={`${messages.table.remove} : ${column.name}`}
+              title={messages.table.remove}
+              onClick={() => removeColumn(column.id)}
+              className="rounded p-0.5 text-neutral-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
+            >
+              <IconX width={12} height={12} />
+            </button>
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function DataTable({ columns, rows }: { columns: Column[]; rows: Row[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -139,15 +217,7 @@ export function DataTable({ columns, rows }: { columns: Column[]; rows: Row[] })
               {messages.table.rowNumber}
             </div>
             {columns.map((c, i) => (
-              <div
-                key={c.id}
-                className="flex shrink-0 items-center gap-1.5 border-l border-neutral-200/70 px-3 text-xs font-semibold text-neutral-700 dark:border-neutral-800 dark:text-neutral-200"
-                style={{ width: widths[i], height: ROW_HEIGHT }}
-                title={c.name}
-              >
-                {KIND_BADGE[c.kind] && <span className="text-[11px] font-normal text-neutral-400">{KIND_BADGE[c.kind]}</span>}
-                <span className="truncate">{c.name}</span>
-              </div>
+              <HeaderCell key={c.id} column={c} width={widths[i]} />
             ))}
           </div>
 

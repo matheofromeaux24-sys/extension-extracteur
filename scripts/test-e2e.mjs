@@ -292,6 +292,46 @@ async function openUiFor(env, url) {
     await t.close();
   }
 
+  // Bibliothèque publicitaire Meta : type de média, renommage et suppression de colonnes.
+  {
+    const { target: t, ui: u } = await openUiFor(env, `${base}/meta-ad-library.html`);
+    await u.getByText(/Liste 1 sur \d+/).waitFor({ timeout: 15000 });
+    const names = () => u.evaluate(() => Array.from(document.querySelectorAll('[data-column-name]')).map((e) => e.textContent));
+    const initial = await names();
+    check(initial.includes('Type de média') && initial.includes('Vidéo'), 'Pubs Meta : colonnes « Type de média » et « Vidéo »', initial.slice(0, 6).join(' | '));
+    if (shots) await u.screenshot({ path: path.join(shotDir, 'ui-meta-ads.png') });
+
+    await u.locator('[data-column-name]', { hasText: 'Statut' }).dblclick();
+    const input = u.locator('input[aria-label^="Renommer"]');
+    await input.fill('État de la pub');
+    await input.press('Enter');
+    const renamed = (await names()).includes('État de la pub');
+
+    const removeTarget = u.locator('[data-column-name]', { hasText: 'Platforms' });
+    await removeTarget.hover();
+    await u.getByRole('button', { name: 'Supprimer la colonne : Platforms' }).click();
+    const removed = !(await names()).includes('Platforms');
+    await u.getByRole('button', { name: 'Annuler' }).click();
+    const restored = (await names()).includes('Platforms');
+    await removeTarget.hover();
+    await u.getByRole('button', { name: 'Supprimer la colonne : Platforms' }).click();
+
+    await u.getByRole('button', { name: /Télécharger/ }).click();
+    const [dl] = await Promise.all([u.waitForEvent('download'), u.getByRole('menuitem', { name: /xlsx/i }).click()]);
+    const wb = XLSX.read(readFileSync(await dl.path()));
+    const sheet = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+    const header = sheet[0];
+    const typeCol = header.indexOf('Type de média');
+    const types = sheet.slice(1).map((r) => r[typeCol]);
+    check(
+      renamed && removed && restored && header.includes('État de la pub') && !header.includes('Platforms') && types.join(',') === 'Vidéo,Image,Carrousel,Vidéo,Texte,Image,Carrousel,Vidéo,Image,Image',
+      'Renommer, supprimer (avec annulation) et exporter',
+      `renommée ${renamed}, supprimée ${removed}, rétablie ${restored}, types : ${types.join(', ')}`,
+    );
+    await u.close();
+    await t.close();
+  }
+
   // Page interdite, avec des résultats déjà affichés : bandeau explicatif.
   await target.goto('chrome://version');
   await ui.getByText(/Chrome interdit d’analyser cette page/).waitFor({ timeout: 5000 }).then(

@@ -18,6 +18,7 @@ export interface Toast {
   id: number;
   text: string;
   tone: 'success' | 'error';
+  action?: { label: string; run: () => void };
 }
 
 export interface PaginationSettings {
@@ -98,8 +99,8 @@ export const setState = useStore.setState;
 export const getState = useStore.getState;
 
 let toastTimer = 0;
-export function showToast(text: string, tone: Toast['tone'] = 'success'): void {
+export function showToast(text: string, tone: Toast['tone'] = 'success', action?: Toast['action']): void {
   window.clearTimeout(toastTimer);
-  setState({ toast: { id: Date.now(), text, tone } });
-  toastTimer = window.setTimeout(() => setState({ toast: null }), 3200);
+  setState({ toast: { id: Date.now(), text, tone, action } });
+  toastTimer = window.setTimeout(() => setState({ toast: null }), action ? 6000 : 3200);
 }

@@ -32,6 +32,27 @@ Pendant le développement, `npm run dev` recompile automatiquement à chaque mod
 4. Pour récupérer **toutes les pages**, choisissez l'**Action pour charger plus d'éléments** (souvent déjà présélectionnée) puis cliquez sur **Extraire toutes les pages** (voir ci-dessous).
 5. Cliquez sur **Copier** (format tabulé, à coller dans Google Sheets ou Excel) ou sur **Télécharger** (Excel `.xlsx`, CSV pour Excel avec `;`, ou CSV standard avec `,`). Le nom de fichier est automatique : `domaine_AAAA-MM-JJ_HH-MM`.
 
+### Renommer ou supprimer une colonne
+
+- **Renommer** : double-cliquez sur le nom de la colonne dans le tableau (ou survolez-la puis ✎), tapez le nouveau nom, Entrée. Le nouveau nom est repris dans les exports CSV / Excel et la copie.
+- **Supprimer** : survolez l'en-tête puis ✕. Un message permet d'**annuler** pendant quelques secondes.
+
+### Type de média (vidéo, image, carrousel, texte)
+
+Pour les listes qui contiennent des vidéos ou des carrousels (bibliothèque publicitaire Meta, réseaux sociaux, galeries…), une colonne **Type de média** est ajoutée en tête :
+
+| Valeur | Signification |
+|---|---|
+| Vidéo | l'élément contient une vidéo |
+| Image | une seule image principale |
+| Plusieurs images | plusieurs grandes images empilées |
+| Carrousel | plusieurs images ou vidéos côte à côte (diaporama) |
+| Texte | aucune image ni vidéo (les avatars, logos et icônes ne comptent pas) |
+
+La colonne **Vidéo** contient l'adresse du fichier vidéo quand la page la fournit (pas pour les flux `blob:` diffusés morceau par morceau) ; l'image d'aperçu de la vidéo va dans la colonne Image. Sur un catalogue classique où tout est « Image », la colonne n'est pas ajoutée.
+
+Autres reconnaissances automatiques : **Statut** (Active / Inactive, Ouvert…), **Bouton (CTA)** (Acheter, En savoir plus…), et les libellés de la page (« Identifiant dans la bibliothèque : 123 » donne une colonne « Identifiant dans la bibliothèque » contenant « 123 »).
+
 ### Choisir soi-même le bloc à extraire (avis, commentaires…)
 
 Si la liste proposée n'est pas celle que vous voulez :
@@ -97,6 +118,7 @@ Pages de test fournies dans `test-pages/` (copies fidèles du balisage réel, ut
 | `grand-volume.html` | 10 000 fiches | Analyse complète en ~3 s, tableau fluide |
 | `fil-infini.html` | Défilement infini de la page entière | 60 annonces en 3 chargements |
 | `spa-pagination.html` | Pagination d'application monopage (bouton sans lien) | 30 offres sur 3 pages |
+| `meta-ad-library.html` | Bibliothèque publicitaire Meta (pubs vidéo, image, carrousel, texte) | 10 pubs : Type de média, Statut, Identifiant, Date, Image, Vidéo, Description, Titre, Bouton (CTA) |
 | `fiche-avis.html` | Fiche produit : produits similaires + avis clients | Liste 1 = produits similaires ; « Modifier la liste » → 4 avis (Auteur, Note, Titre, Date…) |
 
 Pagination dans les pages de test : `amazon.html` (3 pages, lien « Suivant »), `prestashop.html` (2 pages, « Suivant » désactivé en fin), `google-maps.html` (défilement du panneau interne, 48 lieux), `blog.html` (bouton « Charger plus », 15 articles).

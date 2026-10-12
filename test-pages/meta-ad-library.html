@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Bibliothèque publicitaire Meta – Flytex</title>
+<!-- Copie simplifiée de la Bibliothèque publicitaire Meta (classes générées comme sur le vrai site) :
+     publicités vidéo, image, carrousel, texte seul et « plusieurs versions ». -->
+<style>
+  body { font-family: Helvetica, Arial, sans-serif; margin: 0; background: #f0f2f5; color: #1c1e21; }
+  .x9f619.top { background: #fff; padding: 16px 24px; border-bottom: 1px solid #ddd; }
+  .xrvj5dj { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 24px; }
+  .x1plvlek { background: #fff; border-radius: 8px; border: 1px solid #dadde1; overflow: hidden; }
+  .x1cy8zhl { padding: 12px; font-size: 13px; color: #65676b; border-bottom: 1px solid #eee; }
+  .x1cy8zhl .xmi5d70 { color: #1c1e21; }
+  .x6s0dn4 { display: flex; align-items: center; gap: 8px; padding: 12px; }
+  .x6s0dn4 img { width: 32px; height: 32px; border-radius: 50%; background: #ccc; }
+  .x8t9es0 { padding: 0 12px 12px; font-size: 14px; white-space: pre-wrap; }
+  .xh8yej3 { width: 100%; height: 300px; object-fit: cover; background: #ddd; display: block; }
+  video.xh8yej3 { background: #000; }
+  .x1lliihq { display: flex; overflow: hidden; gap: 8px; padding: 0 12px; }
+  .x1lliihq > div { flex: 0 0 240px; border: 1px solid #ddd; border-radius: 6px; }
+  .x1lliihq img { width: 240px; height: 240px; object-fit: cover; background: #ddd; display: block; }
+  .x1y1aw1k { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f7f8fa; font-size: 13px; }
+  .xo1l8bm { font-weight: 600; }
+  .cta { background: #e4e6eb; border-radius: 6px; padding: 6px 12px; font-weight: 600; }
+  .platforms span { display: inline-block; width: 12px; height: 12px; background: #65676b; border-radius: 3px; margin-right: 3px; }
+  .details { margin-top: 8px; display: inline-block; border: 1px solid #ccd0d5; border-radius: 6px; padding: 4px 10px; color: #1c1e21; }
+</style>
+</head>
+<body>
+<div class="x9f619 top" role="banner">
+  <div><b>Bibliothèque publicitaire</b> · Toutes les publicités · France · <input aria-label="Rechercher" value="Flytex"></div>
+  <div class="x1i10hfl" style="margin-top:8px;font-size:13px">~10 résultats</div>
+</div>
+<div class="xrvj5dj xdq2opy xexx8yu xbxaen2 x18d9i69 xbbxn1n xdoe023 xbumo9q x143o31f x7sq92a x1crum5w" id="results"></div>
+<script>
+const ads = [
+  { type: 'video', text: 'Vos vacances commencent ici ✈️ Valises légères et ultra-résistantes, garanties 10 ans.', headline: 'Valise cabine Flytex Air', cta: 'Acheter' },
+  { type: 'image', text: 'Nouvelle collection automne : -20 % sur tous les sacs de voyage jusqu’à dimanche.', headline: 'Sacs de voyage -20 %', cta: 'Acheter' },
+  { type: 'carousel', text: 'Découvrez toute la gamme Flytex, du bagage cabine à la grande valise.', headline: 'La gamme Flytex', cta: 'En savoir plus', cards: ['Cabine 55 cm', 'Moyenne 68 cm', 'Grande 77 cm'] },
+  { type: 'video', text: 'Testée par nos équipes sur 100 000 km. Regardez le crash-test en vidéo.', headline: 'Crash-test Flytex', cta: 'En savoir plus' },
+  { type: 'text', text: 'Livraison gratuite dès 49 € et retours offerts pendant 30 jours. Commandez sur flytex.fr.', headline: 'Livraison offerte', cta: 'Acheter' },
+  { type: 'image', text: 'Le sac à dos qui passe partout, même sous le siège.', headline: 'Sac à dos Flytex Go', cta: 'Acheter', versions: true },
+  { type: 'carousel', text: 'Nos best-sellers de l’été, notés 4,8/5 par 12 000 clients.', headline: 'Best-sellers', cta: 'Acheter', cards: ['Valise Air', 'Sac Go', 'Trousse Mini', 'Housse Protect'] },
+  { type: 'video', text: 'Un an de voyage autour du monde avec une seule valise Flytex.', headline: 'Le tour du monde', cta: 'Regarder' },
+  { type: 'image', text: 'Personnalisez votre valise avec vos initiales, gratuitement.', headline: 'Personnalisation offerte', cta: 'En savoir plus' },
+  { type: 'image', text: 'Black Friday : jusqu’à -40 % sur une sélection de valises.', headline: 'Black Friday Flytex', cta: 'Acheter' },
+];
+const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+document.getElementById('results').innerHTML = ads.map((ad, i) => {
+  const id = 1200000000000000 + i * 7919;
+  const active = i % 4 !== 3;
+  const media =
+    ad.type === 'video' ? `<video class="xh8yej3" controls preload="none" poster="https://scontent.xx.fbcdn.net/v/t15/${id}_poster.jpg" src="https://video.xx.fbcdn.net/v/t42/${id}_n.mp4"></video>` :
+    ad.type === 'image' ? `<img class="xh8yej3 x1ey2m1c" src="https://scontent.xx.fbcdn.net/v/t39/${id}_n.jpg" alt="">` :
+    ad.type === 'carousel' ? `<div class="x1lliihq x1n2onr6">${ad.cards.map((c, k) => `<div><img src="https://scontent.xx.fbcdn.net/v/t39/${id}_${k}.jpg" alt=""><div style="padding:8px;font-size:13px;font-weight:600">${c}</div></div>`).join('')}</div>` : '';
+  return `
+  <div class="x1plvlek xryxfnj x1gzqxud x178xt8z xm81vs4 xso031l xy80clv x1lq5wgf xgqcy7u x30kzoy x9jhf4c">
+    <div class="x1cy8zhl x9f619 x78zum5">
+      <div><span class="x8t9es0 xmi5d70" style="padding:0;color:${active ? '#31a24c' : '#65676b'}">● ${active ? 'Active' : 'Inactive'}</span></div>
+      <div><span class="xmi5d70">Identifiant dans la bibliothèque : ${id}</span></div>
+      <div><span class="x8t9es0" style="padding:0">Diffusion commencée le ${1 + i * 2} ${months[(8 + i) % 12]} 2024</span></div>
+      <div class="platforms">Plateformes <span></span><span></span><span></span></div>
+      ${ad.versions ? '<div><span class="x8t9es0" style="padding:0">Cette publicité a plusieurs versions</span></div>' : ''}
+      <div role="button" tabindex="0" class="details">Voir les détails de la publicité</div>
+    </div>
+    <div class="x6s0dn4 x78zum5"><img src="https://scontent.xx.fbcdn.net/v/t39/flytex_avatar.jpg" alt=""><div><a href="https://www.facebook.com/flytex" class="xt0psk2 x1i10hfl"><span class="x8t9es0" style="padding:0;font-weight:600;color:#1c1e21">Flytex</span></a><div style="font-size:12px;color:#65676b">Sponsorisé</div></div></div>
+    <div class="x8t9es0 xw2csxc x1odjw0f">${ad.text}</div>
+    ${media}
+    <a class="x1i10hfl xjbqb8w" href="https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.flytex.fr%2F${i}">
+      <div class="x1y1aw1k"><div><div style="font-size:12px;color:#65676b">FLYTEX.FR</div><div class="xo1l8bm">${ad.headline}</div></div><div role="button" class="cta">${ad.cta}</div></div>
+    </a>
+  </div>`;
+}).join('');
+</script>
+</body>
+</html>

@@ -18,7 +18,6 @@ const SKIP_TAGS = new Set([
   'svg',
   'SVG',
   'CANVAS',
-  'VIDEO',
   'AUDIO',
   'OBJECT',
   'EMBED',

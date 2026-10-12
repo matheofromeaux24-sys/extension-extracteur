@@ -53,6 +53,15 @@ function Toast() {
       >
         {toast.tone === 'success' ? <IconCheck className="text-brand-500" /> : <IconAlert className="text-amber-400" />}
         {toast.text}
+        {toast.action && (
+          <button
+            type="button"
+            onClick={toast.action.run}
+            className="pointer-events-auto ml-2 rounded-lg px-2 py-0.5 font-semibold text-brand-500 hover:bg-white/10 dark:hover:bg-black/5"
+          >
+            {toast.action.label}
+          </button>
+        )}
       </div>
     </div>
   );

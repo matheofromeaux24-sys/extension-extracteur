@@ -3,7 +3,7 @@
 import { messages } from '../../shared/i18n';
 import type { Column, ColumnKind, Derive, Row } from '../../shared/types';
 import { ADDRESS_RE, dominantKind } from './fieldTypes';
-import type { Field, FieldType } from './fields';
+import { MEDIA_TYPE_KEY, type Field, type FieldType } from './fields';
 import { isHashyClass } from './similarity';
 
 type ColumnLabel = keyof typeof messages.columns;
@@ -11,6 +11,8 @@ type ColumnLabel = keyof typeof messages.columns;
 interface Agg {
   key: string;
   derive?: Derive;
+  /** Libellé trouvé dans la page (« Catégorie : … ») : sert de nom de colonne. */
+  label?: string;
   type: FieldType;
   values: string[];
   count: number;
@@ -68,8 +70,10 @@ export function buildColumns(perItem: Field[][], opts: BuildOptions = {}): { col
   let cols = Array.from(aggs.values()).filter((a) => a.count >= Math.min(minCount, n));
 
   if (!opts.isTable) cols = cols.filter((a) => !isNoise(a, n));
-  cols = dropDuplicates(cols);
-  cols.sort((a, b) => a.orderSum / a.count - b.orderSum / b.count);
+  cols = mergeComplementary(dropDuplicates(cols));
+  // Ordre de la page, avec « Type de média » en tête quand il est présent.
+  const position = (a: Agg) => (a.key === MEDIA_TYPE_KEY ? -1 : a.orderSum / a.count);
+  cols.sort((a, b) => position(a) - position(b));
   if (opts.isTable) cols.sort((a, b) => cellIndex(a.key) - cellIndex(b.key));
   cols = splitRatingCounts(cols).slice(0, MAX_COLUMNS);
 
@@ -128,6 +132,11 @@ function cellIndex(key: string): number {
 }
 
 function isNoise(a: Agg, n: number): boolean {
+  // « Type de média » n'apporte rien si tout est image ou texte (catalogue classique).
+  if (a.key === MEDIA_TYPE_KEY) {
+    const M = messages.media;
+    return !a.values.some((v) => v === M.video || v === M.carousel || v === M.images);
+  }
   const filled = a.values.filter(Boolean);
   const distinct = new Set(filled);
   if (a.type === 'text' || a.type === 'aria') {
@@ -148,12 +157,14 @@ function isNoise(a: Agg, n: number): boolean {
 function stripCommonLabel(a: Agg): void {
   const filled = a.values.filter(Boolean);
   if (filled.length < 2) return;
-  const m = filled[0].match(/^([^:]{1,25}):\s+(?=\S)/);
+  const m = filled[0].match(/^([^:]{1,40}):\s+(?=\S)/);
   if (!m) return;
   const prefix = m[0];
   if (filled.filter((v) => v.startsWith(prefix)).length / filled.length < 0.8) return;
   a.values = a.values.map((v) => (v.startsWith(prefix) ? v.slice(prefix.length) : v));
   a.hint += ' ' + m[1].toLowerCase();
+  const label = m[1].trim();
+  a.label = label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 /** Valeur comparable : les liens sont comparés sans leur ancre (#…). */
@@ -194,6 +205,29 @@ function dropDuplicates(cols: Agg[]): Agg[] {
   return kept;
 }
 
+/**
+ * Fusionne les colonnes d'images (ou de vidéos, de liens) qui ne sont jamais remplies
+ * sur la même ligne : ce sont des variantes de mise en page (pub image / pub vidéo…).
+ */
+function mergeComplementary(cols: Agg[]): Agg[] {
+  const kept: Agg[] = [];
+  outer: for (const c of cols) {
+    if (c.type === 'src' || c.type === 'video' || c.type === 'href') {
+      for (const k of kept) {
+        if (k.type !== c.type) continue;
+        if (c.values.some((v, i) => v && k.values[i])) continue;
+        c.values.forEach((v, i) => {
+          if (v) k.values[i] = v;
+        });
+        k.count += c.count;
+        continue outer;
+      }
+    }
+    kept.push(c);
+  }
+  return kept;
+}
+
 function isTextual(t: FieldType): boolean {
   return t === 'text' || t === 'aria';
 }
@@ -219,6 +253,10 @@ const HINTS: Array<[RegExp, ColumnLabel, ColumnKind[]?]> = [
 ];
 const TITLE_HINT = new RegExp(`${B}(title|titre|name|nom|heading|headline|product-?name)`);
 
+const STATUS_RE = /^(active?|inactive?|actif|inactif|en ligne|hors ligne|en cours|terminée?|publiée?|brouillon|ouvert|fermé|online|offline|live|ended|draft)$/i;
+const CTA_RE =
+  /^(acheter|acheter maintenant|en savoir plus|s['’]inscrire|réserver|télécharger|regarder|commander|postuler|nous contacter|contacter|obtenir l['’]offre|découvrir|essayer|jouer|installer|shop now|buy now|learn more|sign up|book now|download|watch more|watch now|contact us|apply now|get offer|order now|install now|play game|subscribe|s['’]abonner|envoyer un message|send message|appeler|call now|voir le menu|get quote|demander un devis)$/i;
+
 const KIND_LABEL: Partial<Record<ColumnKind, ColumnLabel>> = {
   price: 'price',
   date: 'date',
@@ -241,13 +279,20 @@ function elementPath(key: string): string {
   return key.replace(/\[\d+\]$/, '').replace(/@\w+$/, '');
 }
 
+/** Classes générées par les outils de build (Meta « x1odjw0f », Google « Nv2PK ») : illisibles. */
+function isObfuscated(c: string): boolean {
+  if (/[-_]/.test(c)) return false;
+  if (/^x[a-z0-9]{4,9}$/.test(c)) return true;
+  return c.length <= 10 && /\d/.test(c) && /[a-z]/i.test(c);
+}
+
 /** Nom lisible tiré d'une classe CSS : « product-brand » → « Product brand ». */
 function humanizeKey(key: string): string {
   const last = elementPath(key).split('>').pop() || '';
   const classes = last
     .split('.')
     .slice(1)
-    .filter((c) => !isHashyClass(c) && c.length >= 3 && !UTILITY_CLASS.test(c));
+    .filter((c) => !isHashyClass(c) && !isObfuscated(c) && c.length >= 3 && !UTILITY_CLASS.test(c));
   const c = classes[0];
   if (!c) return '';
   const words = c
@@ -262,7 +307,7 @@ function humanizeKey(key: string): string {
 function nameColumns(cols: Agg[], opts: BuildOptions): Column[] {
   const L = messages.columns;
   const kinds = cols.map<ColumnKind>((a) =>
-    a.type === 'href' ? 'link' : a.type === 'src' ? 'image' : dominantKind(a.values),
+    a.type === 'href' ? 'link' : a.type === 'src' ? 'image' : a.type === 'video' ? 'video' : dominantKind(a.values),
   );
   const names: string[] = new Array(cols.length).fill('');
 
@@ -299,11 +344,20 @@ function nameColumns(cols: Agg[], opts: BuildOptions): Column[] {
   }
 
   let descriptionUsed = false;
+  // Description = le texte le plus long (≥ 50 caractères en moyenne), hors titre.
+  let longestIdx = -1;
+  cols.forEach((a, i) => {
+    if (names[i] || kinds[i] !== 'text' || a.key === MEDIA_TYPE_KEY) return;
+    if (avgLength(a) >= 50 && (longestIdx < 0 || avgLength(a) > avgLength(cols[longestIdx]))) longestIdx = i;
+  });
   cols.forEach((a, i) => {
     if (names[i]) return;
     const kind = kinds[i];
+    if (a.key === MEDIA_TYPE_KEY) return void (names[i] = L.mediaType);
     if (kind === 'link') return void (names[i] = L.link);
     if (kind === 'image') return void (names[i] = L.image);
+    if (kind === 'video') return void (names[i] = L.video);
+    if (a.label) return void (names[i] = a.label);
     // Les indices de l'élément lui-même priment sur ceux de son parent
     // (« span.author » dans « div.review-head » = Auteur, pas Avis).
     const [own, parent = ''] = a.hint.split(' | ');
@@ -326,7 +380,9 @@ function nameColumns(cols: Agg[], opts: BuildOptions): Column[] {
     if (filled.length && filled.filter((v) => ADDRESS_RE.test(v)).length / filled.length >= 0.6) {
       return void (names[i] = L.address);
     }
-    if (!descriptionUsed && avgLength(a) >= 80) {
+    if (filled.length && filled.every((v) => STATUS_RE.test(v))) return void (names[i] = L.status);
+    if (filled.length && filled.every((v) => CTA_RE.test(v))) return void (names[i] = L.cta);
+    if (!descriptionUsed && i === longestIdx) {
       descriptionUsed = true;
       kinds[i] = 'description';
       return void (names[i] = L.description);

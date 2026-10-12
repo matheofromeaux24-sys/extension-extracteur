@@ -2,10 +2,11 @@
 
 import { absoluteUrl, backgroundImage, imageSource } from '../../shared/url';
 import { isRendered, isSkippedTag, renderedChildren } from '../traverse';
+import { messages } from '../../shared/i18n';
 import { looksLikePrice } from './fieldTypes';
 import { normalizedClasses } from './similarity';
 
-export type FieldType = 'text' | 'href' | 'src' | 'aria';
+export type FieldType = 'text' | 'href' | 'src' | 'aria' | 'video';
 
 export interface Field {
   /** Chemin relatif à l'item + type (ex. « div.info>a.title@href »). */
@@ -34,8 +35,8 @@ export function cleanText(s: string): string {
     .replace(/[\s\u00a0\u202f\u200b]+/g, ' ')
     .trim()
     // Séparateurs décoratifs en début / fin : « · Ferme à 21:30 ».
-    .replace(/^[·⋅•|]\s*/, '')
-    .replace(/\s*[·⋅•|]$/, '');
+    .replace(/^[·⋅•●○■◆|]\s*/, '')
+    .replace(/\s*[·⋅•●○■◆|]$/, '');
   return t.length > MAX_LEN ? t.slice(0, MAX_LEN) + '…' : t;
 }
 
@@ -154,6 +155,12 @@ export function extractItemFields(item: Element, base: string, track?: Map<Eleme
     };
     const p = path || '.';
 
+    if (tag === 'VIDEO') {
+      add(`${p}@video`, videoSource(el as HTMLVideoElement, base), 'video', ctx, hint);
+      const poster = el.getAttribute('poster');
+      if (poster) add(`${p}@poster`, absoluteUrl(poster, base), 'src', ctx, hint);
+      return;
+    }
     if (tag === 'A') add(`${p}@href`, absoluteUrl(el.getAttribute('href'), base), 'href', ctx, hint);
     if (tag === 'IMG') add(`${p}@src`, imageSource(el, base), 'src', ctx, hint);
     else {
@@ -197,7 +204,58 @@ export function extractItemFields(item: Element, base: string, track?: Map<Eleme
     textDone: false,
     parentHint: '',
   });
+  current = item;
+  add(MEDIA_TYPE_KEY, mediaTypeOf(item), 'text', { inLink: false, inHeading: false, buttonLike: false, ariaHidden: false, textDone: false, parentHint: '' }, 'media-type');
   return fields;
+}
+
+/** Clé de la colonne calculée « Type de média ». */
+export const MEDIA_TYPE_KEY = '.@mediatype';
+
+/** Adresse d'une vidéo (les flux blob: ne sont pas réutilisables hors de la page). */
+function videoSource(video: HTMLVideoElement, base: string): string {
+  const candidates = [video.currentSrc, video.getAttribute('src'), ...Array.from(video.querySelectorAll('source')).map((s) => s.getAttribute('src'))];
+  for (const c of candidates) {
+    if (c && !c.startsWith('blob:') && !c.startsWith('data:')) return absoluteUrl(c, base);
+  }
+  return '';
+}
+
+function size(el: Element): { w: number; h: number; left: number; top: number } {
+  const r = el.getBoundingClientRect();
+  return {
+    w: r.width || Number(el.getAttribute('width')) || 0,
+    h: r.height || Number(el.getAttribute('height')) || 0,
+    left: r.left,
+    top: r.top,
+  };
+}
+
+const CAROUSEL_HINT =
+  '[aria-roledescription*="carousel" i], [aria-roledescription*="carrousel" i], [class*="carousel" i], [class*="carrousel" i], [class*="swiper" i], [class*="slick" i], [class*="slider" i]';
+
+/**
+ * Type de contenu d'un item : vidéo, image, plusieurs images, carrousel ou texte seul.
+ * Les petites images (avatars, logos, icônes) ne comptent pas.
+ */
+export function mediaTypeOf(item: Element): string {
+  const M = messages.media;
+  const videos = Array.from(item.querySelectorAll('video'));
+  const images = Array.from(item.querySelectorAll('img')).filter((img) => {
+    const s = size(img);
+    return s.w >= 100 && s.h >= 80;
+  });
+  const media = [...videos, ...images];
+  if (media.length >= 2) {
+    const boxes = media.map(size);
+    // Médias côte à côte (même hauteur, positions différentes) = carrousel horizontal.
+    const sideBySide = boxes.some((a, i) => boxes.some((b, j) => j > i && Math.abs(a.top - b.top) < 20 && Math.abs(a.left - b.left) > 60));
+    if (sideBySide || item.querySelector(CAROUSEL_HINT)) return M.carousel;
+  }
+  if (videos.length) return M.video;
+  if (images.length >= 2) return M.images;
+  if (images.length === 1) return M.image;
+  return M.text;
 }
 
 /** Extraction dédiée aux lignes de tableau : une colonne par cellule. */

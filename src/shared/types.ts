@@ -6,6 +6,7 @@ export type ColumnKind =
   | 'description'
   | 'link'
   | 'image'
+  | 'video'
   | 'price'
   | 'date'
   | 'rating'
