@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { format, messages } from '../../shared/i18n';
 import { forbiddenReason } from '../../shared/messaging';
 import { analyze, reanalyzeCurrent, requestPermission } from '../lib/controller';
-import { useStore } from '../store/useStore';
+import { jobActive, useStore } from '../store/useStore';
 import { Button } from './ui/Button';
 import { IconAlert, IconLock, IconRefresh, IconSearch } from './ui/Icons';
 
@@ -119,7 +119,8 @@ export function StaleBanner() {
   const target = useStore((s) => s.target);
   const analyzed = useStore((s) => s.analyzed);
   const status = useStore((s) => s.status);
-  if (!target || !analyzed || status !== 'ready') return null;
+  const running = useStore((s) => jobActive(s.job));
+  if (!target || !analyzed || status !== 'ready' || running) return null;
   const sameTab = target.tabId === analyzed.tabId;
   const samePage = sameTab && stripHash(target.url) === stripHash(analyzed.url);
   if (samePage) return null;

@@ -162,6 +162,76 @@ async function openUiFor(env, url) {
     await ui.emulateMedia({ colorScheme: 'light' });
   }
 
+  // ---------------------------------------------------------------------------
+  // Pagination : chaque mode sur sa page de test.
+  const runPagination = async (file, { mode, expectedMode, rows, pages, maxPages = 10, label }) => {
+    const { target: t, ui: u } = await openUiFor(env, `${base}/${file}`);
+    try {
+      await u.getByText(/Liste 1 sur \d+/).waitFor({ timeout: 15000 });
+      const select = u.locator('#pagination-mode');
+      await u.waitForFunction(() => document.querySelector('#pagination-mode')?.value !== 'none' || true);
+      await u.waitForTimeout(400); // détection de la pagination
+      const pre = await select.inputValue();
+      if (mode) await select.selectOption(mode);
+      const maxField = u.getByLabel(/^(Pages|Défilements|Clics) max$/);
+      await maxField.fill(String(maxPages));
+      await u.getByLabel('Délai min').fill('0');
+      await u.getByLabel('Délai max').fill('0.2');
+      await u.getByRole('button', { name: /tout extraire|Extraire toutes les pages/ }).click();
+      const toast = u.locator('[role=status]', { hasText: 'Terminé' });
+      await toast.waitFor({ timeout: 60000 });
+      const text = await toast.textContent();
+      const m = text.match(/Terminé : ([\d\s ]+) articles sur (\d+) page/);
+      const got = m ? [Number(m[1].replace(/\D/g, '')), Number(m[2])] : [0, 0];
+      const okMode = !expectedMode || pre === expectedMode;
+      check(okMode && got[0] === rows && got[1] === pages, label, `mode présélectionné « ${pre} », ${got[0]} lignes sur ${got[1]} pages`);
+      if (shots && file === 'amazon.html') await u.screenshot({ path: path.join(shotDir, 'ui-pagination-terminee.png') });
+    } catch (e) {
+      check(false, label, e.message.split('\n')[0]);
+    }
+    await u.close();
+    await t.close();
+  };
+  await runPagination('amazon.html', { expectedMode: 'next', rows: 72, pages: 3, label: 'Page suivante (Amazon, 3 pages rechargées)' });
+  await runPagination('amazon.html', { expectedMode: 'next', rows: 48, pages: 2, maxPages: 2, label: 'Page suivante limitée à 2 pages' });
+  await runPagination('prestashop.html', { expectedMode: 'next', rows: 18, pages: 2, label: 'Page suivante (PrestaShop, « Suivant » désactivé en fin)' });
+  await runPagination('spa-pagination.html', { expectedMode: 'next', rows: 30, pages: 3, label: 'Page suivante sans rechargement (SPA)' });
+  await runPagination('google-maps.html', { expectedMode: 'scroll', rows: 48, pages: 3, label: 'Défilement infini du panneau interne (Google Maps)' });
+  await runPagination('fil-infini.html', { mode: 'scroll', rows: 60, pages: 3, label: 'Défilement infini de la page' });
+  await runPagination('blog.html', { expectedMode: 'loadMore', rows: 15, pages: 3, label: 'Clic sur « Charger plus » (blog)' });
+
+  // Pause / Reprendre / Stop.
+  {
+    const { target: t, ui: u } = await openUiFor(env, `${base}/amazon.html`);
+    await u.getByText(/Liste 1 sur \d+/).waitFor({ timeout: 15000 });
+    await u.waitForTimeout(400);
+    await u.getByLabel('Délai min').fill('3');
+    await u.getByLabel('Délai max').fill('3');
+    await u.getByRole('button', { name: 'Extraire toutes les pages' }).click();
+    await u.getByRole('button', { name: 'Pause' }).click();
+    const paused = await u.getByText('En pause').waitFor({ timeout: 5000 }).then(() => true, () => false);
+    await u.getByRole('button', { name: 'Reprendre' }).click();
+    await u.getByRole('button', { name: 'Stop' }).click();
+    const stopped = await u.locator('[role=status]', { hasText: 'Arrêté à votre demande' }).waitFor({ timeout: 10000 }).then(() => true, () => false);
+    check(paused && stopped, 'Pause, Reprendre et Stop');
+    await u.close();
+    await t.close();
+  }
+
+  // Choix du bouton « Page suivante » par clic sur la page.
+  {
+    const { target: t, ui: u } = await openUiFor(env, `${base}/prestashop.html`);
+    await u.getByText(/Liste 1 sur \d+/).waitFor({ timeout: 15000 });
+    await u.waitForTimeout(400);
+    await u.getByRole('button', { name: 'Changer' }).click();
+    await t.waitForTimeout(500);
+    await t.locator('a.next').click();
+    const chosen = await u.getByText(/Choisi :/).waitFor({ timeout: 5000 }).then(() => true, () => false);
+    check(chosen && t.url().endsWith('/prestashop.html'), 'Choix du bouton par clic (sans déclencher le lien)', t.url());
+    await u.close();
+    await t.close();
+  }
+
   // Page interdite, avec des résultats déjà affichés : bandeau explicatif.
   await target.goto('chrome://version');
   await ui.getByText(/Chrome interdit d’analyser cette page/).waitFor({ timeout: 5000 }).then(

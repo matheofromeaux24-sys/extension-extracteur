@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import type { ForbiddenReason } from '../../shared/messaging';
-import type { ExtractResult } from '../../shared/types';
+import type { ExtractResult, JobState, PaginationDetection, PaginationMode } from '../../shared/types';
 
 export type Status = 'idle' | 'loading' | 'ready' | 'empty' | 'forbidden' | 'permission' | 'error';
 export type Mode = 'list' | 'details';
@@ -18,6 +18,21 @@ export interface Toast {
   id: number;
   text: string;
   tone: 'success' | 'error';
+}
+
+export interface PaginationSettings {
+  mode: PaginationMode;
+  /** L'utilisateur a choisi le mode lui-même : on ne le remplace plus par la détection. */
+  modeTouched: boolean;
+  maxPages: number;
+  /** Délais en secondes. */
+  delayMin: number;
+  delayMax: number;
+  /** Élément choisi par clic sur la page. */
+  selector?: string;
+  selectorLabel?: string;
+  detection: PaginationDetection | null;
+  picking: boolean;
 }
 
 export interface State {
@@ -37,6 +52,12 @@ export interface State {
   endedAt: number | null;
   helpOpen: boolean;
   toast: Toast | null;
+  pagination: PaginationSettings;
+  job: JobState | null;
+}
+
+export function jobActive(job: JobState | null): boolean {
+  return !!job && (job.status === 'running' || job.status === 'paused' || job.status === 'needsPermission');
 }
 
 export const useStore = create<State>(() => ({
@@ -54,7 +75,21 @@ export const useStore = create<State>(() => ({
   endedAt: null,
   helpOpen: false,
   toast: null,
+  pagination: {
+    mode: 'none',
+    modeTouched: false,
+    maxPages: 10,
+    delayMin: 1,
+    delayMax: 3,
+    detection: null,
+    picking: false,
+  },
+  job: null,
 }));
+
+export function setPagination(patch: Partial<PaginationSettings>): void {
+  setState((s) => ({ pagination: { ...s.pagination, ...patch } }));
+}
 
 export const setState = useStore.setState;
 export const getState = useStore.getState;

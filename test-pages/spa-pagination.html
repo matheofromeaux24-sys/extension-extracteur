@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Offres d'emploi – application monopage</title>
+<!-- Pagination d'application monopage (React, Vue…) : le bouton « Suivant » n'a pas de lien,
+     la liste est remplacée en JavaScript sans recharger la page. 3 pages de 10 offres. -->
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0 auto; max-width: 760px; padding: 24px; }
+  ul.jobs { list-style: none; padding: 0; }
+  li.job-card { padding: 14px 0; border-bottom: 1px solid #eee; }
+  .job-card h3 { margin: 0 0 4px; font-size: 16px; }
+  .meta { color: #666; font-size: 14px; }
+  .pager { display: flex; gap: 8px; align-items: center; margin-top: 16px; }
+  .pager button { padding: 6px 12px; border-radius: 8px; border: 1px solid #ccc; background: #fff; }
+  .pager button[disabled] { opacity: .4; }
+</style>
+</head>
+<body>
+<h1>Offres d'emploi</h1>
+<div id="app"></div>
+<script>
+const postes = ['Développeur front-end', 'Data engineer', 'Chef de projet', 'UX designer', 'Comptable', 'Commercial B2B', 'Technicien support', 'Juriste', 'Responsable RH', 'Ingénieur QA'];
+const villes = ['Paris', 'Lyon', 'Lille', 'Rennes', 'Nice'];
+let page = 1;
+function render() {
+  const items = Array.from({ length: 10 }, (_, k) => {
+    const i = (page - 1) * 10 + k;
+    return `<li class="job-card"><h3><a href="#/offre/${i + 1}">${postes[i % 10]} (${['H/F', 'CDI', 'CDD'][Math.floor(i / 10)]})</a></h3><div class="meta"><span class="company">Société ${String.fromCharCode(65 + (i % 26))}</span> · <span class="city">${villes[i % 5]}</span> · <span class="salary">${35 + i} k€</span></div></li>`;
+  }).join('');
+  document.getElementById('app').innerHTML = `<ul class="jobs">${items}</ul>
+    <div class="pager"><button type="button" class="pager-prev" ${page === 1 ? 'disabled' : ''}>‹ Précédent</button><span>Page ${page} / 3</span><button type="button" class="pager-next" ${page === 3 ? 'disabled' : ''}>Suivant ›</button></div>`;
+  document.querySelector('.pager-next').onclick = () => { document.getElementById('app').style.opacity = .5; setTimeout(() => { page++; document.getElementById('app').style.opacity = 1; render(); }, 450); };
+  document.querySelector('.pager-prev').onclick = () => { page--; render(); };
+}
+render();
+</script>
+</body>
+</html>

@@ -1,7 +1,10 @@
 // Parcours du DOM qui traverse le Shadow DOM ouvert et les iframes accessibles
 // (même origine). Les iframes cross-origin sont ignorées sans erreur.
 
+/** Préfixe des éléments ajoutés par l'extension (surbrillance, sélecteur visuel). */
+export const OVERLAY_PREFIX = 'scrapy-easy-';
 export const OVERLAY_TAG = 'scrapy-easy-overlay';
+export const PICKER_TAG = 'scrapy-easy-picker';
 
 const SKIP_TAGS = new Set([
   'SCRIPT',
@@ -27,7 +30,7 @@ const SKIP_TAGS = new Set([
 ]);
 
 export function isSkippedTag(el: Element): boolean {
-  return SKIP_TAGS.has(el.tagName) || el.tagName.toLowerCase() === OVERLAY_TAG;
+  return SKIP_TAGS.has(el.tagName) || el.tagName.toLowerCase().startsWith(OVERLAY_PREFIX);
 }
 
 /** Enfants « rendus » d'un élément : ceux de son shadow root ouvert s'il en a un, plus ses enfants. */

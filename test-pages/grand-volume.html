@@ -17,7 +17,7 @@
 const villes = ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nantes', 'Lille', 'Bordeaux', 'Rennes'];
 const parts = [];
 for (let i = 1; i <= 10000; i++) {
-  parts.push(`<div class="card"><img src="/logos/${i}.png" alt=""><div class="info"><h3 class="name"><a href="/entreprise/${i}">Entreprise n°${i}</a></h3><span class="city">${villes[i % villes.length]}</span> · <span class="phone">01 ${String(10 + (i % 90))} ${String(i % 100).padStart(2, '0')} ${String((i * 7) % 100).padStart(2, '0')} ${String((i * 13) % 100).padStart(2, '0')}</span><div class="email">contact${i}@entreprise${i}.fr</div></div></div>`);
+  parts.push(`<div class="card"><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="/logos/${i}.png" class="lazy" alt=""><div class="info"><h3 class="name"><a href="/entreprise/${i}">Entreprise n°${i}</a></h3><span class="city">${villes[i % villes.length]}</span> · <span class="phone">01 ${String(10 + (i % 90))} ${String(i % 100).padStart(2, '0')} ${String((i * 7) % 100).padStart(2, '0')} ${String((i * 13) % 100).padStart(2, '0')}</span><div class="email">contact${i}@entreprise${i}.fr</div></div></div>`);
 }
 document.getElementById('results').innerHTML = parts.join('');
 </script>

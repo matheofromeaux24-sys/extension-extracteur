@@ -1,12 +1,12 @@
 import { format, messages } from '../../shared/i18n';
 import { moveList } from '../lib/controller';
-import { useStore } from '../store/useStore';
+import { jobActive, useStore } from '../store/useStore';
 import { Button } from './ui/Button';
 import { IconChevronLeft, IconChevronRight, IconPencil } from './ui/Icons';
 
 export function ListNavigator() {
   const result = useStore((s) => s.result);
-  const loading = useStore((s) => s.endedAt === null && s.startedAt !== null);
+  const busy = useStore((s) => (s.endedAt === null && s.startedAt !== null) || jobActive(s.job));
   if (!result) return null;
   const { list, listCount } = result;
   const L = messages.list;
@@ -20,10 +20,10 @@ export function ListNavigator() {
         <span className="text-neutral-500 dark:text-neutral-400">{format(L.items, { count: list.itemCount.toLocaleString('fr-FR') })}</span>
       </div>
       <div className="ml-auto flex items-center gap-1.5">
-        <Button size="sm" variant="ghost" icon={<IconChevronLeft />} disabled={listCount < 2 || loading} onClick={() => void moveList(-1)}>
+        <Button size="sm" variant="ghost" icon={<IconChevronLeft />} disabled={listCount < 2 || busy} title={L.switchHint} onClick={() => void moveList(-1)}>
           {L.prev}
         </Button>
-        <Button size="sm" variant="ghost" disabled={listCount < 2 || loading} onClick={() => void moveList(1)}>
+        <Button size="sm" variant="ghost" disabled={listCount < 2 || busy} title={L.switchHint} onClick={() => void moveList(1)}>
           {L.next}
           <IconChevronRight />
         </Button>

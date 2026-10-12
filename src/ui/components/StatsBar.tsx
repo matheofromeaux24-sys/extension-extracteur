@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { messages } from '../../shared/i18n';
 import { domainOf } from '../../shared/url';
 import { reanalyzeCurrent } from '../lib/controller';
-import { useStore } from '../store/useStore';
+import { jobActive, useStore } from '../store/useStore';
 import { IconRefresh } from './ui/Icons';
 
 function formatDuration(ms: number): string {
@@ -38,6 +38,7 @@ export function StatsBar() {
   const result = useStore((s) => s.result);
   const status = useStore((s) => s.status);
   const pages = useStore((s) => s.pages);
+  const running = useStore((s) => jobActive(s.job));
   const elapsed = useElapsed(useStore((s) => s.startedAt), useStore((s) => s.endedAt));
 
   const title = result?.page.title || target?.title || messages.page.noTab;
@@ -58,7 +59,7 @@ export function StatsBar() {
         </div>
         <button
           onClick={reanalyzeCurrent}
-          disabled={!target || status === 'loading'}
+          disabled={!target || status === 'loading' || running}
           title={messages.page.reanalyze}
           aria-label={messages.page.reanalyze}
           className="ml-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 disabled:opacity-40 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"

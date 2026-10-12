@@ -44,13 +44,18 @@ const types = ['Restaurant français', 'Bouchon lyonnais', 'Bistrot', 'Brasserie
 const streets = ['Rue Mercière', 'Rue Saint-Jean', 'Quai Saint-Antoine', 'Rue Guénot', 'Rue Chavanne', 'Cours de Verdun', 'Rue Royale'];
 const feed = document.querySelector('[role=feed]');
 const map = document.getElementById('map');
-let html = '';
-names.forEach((n, i) => {
-  const rating = (4 + (i % 9) / 10).toFixed(1).replace('.', ',');
-  const reviews = (300 + i * 457).toLocaleString('fr-FR');
-  const price = ['10-20 €', '20-30 €', '30-50 €', '€€€€'][i % 4];
-  const slug = encodeURIComponent(n).replace(/%20/g, '+');
-  html += `
+// Les résultats arrivent par lots de 16 quand on fait défiler le panneau (3 lots au total).
+const QUARTIERS = ['', ' – Vieux Lyon', ' – Croix-Rousse'];
+function batch(b) {
+  let html = '';
+  names.forEach((base, j) => {
+    const i = b * names.length + j;
+    const n = base + QUARTIERS[b];
+    const rating = (4 + (i % 9) / 10).toFixed(1).replace('.', ',');
+    const reviews = (300 + i * 457).toLocaleString('fr-FR');
+    const price = ['10-20 €', '20-30 €', '30-50 €', '€€€€'][i % 4];
+    const slug = encodeURIComponent(n).replace(/%20/g, '+');
+    html += `
   <div jsaction="mouseover:pane.wfvdle${i}">
     <div class="Nv2PK THOPZb CpccDe" jsaction="mouseover:pane.wfvdle${i}">
       <a class="hfpxzc" aria-label="${n}" href="https://www.google.com/maps/place/${slug}/data=!4m7!3m6!1s0x47f4ea${(1000 + i).toString(16)}" jsaction="pane.wfvdle${i}"></a>
@@ -65,10 +70,26 @@ names.forEach((n, i) => {
     </div>
   </div>
   <div class="TFQHme "></div>`;
-  map.insertAdjacentHTML('beforeend', `<div class="pin" style="left:${10 + (i * 37) % 80}%;top:${10 + (i * 53) % 80}%"></div>`);
+    if (b === 0) map.insertAdjacentHTML('beforeend', `<div class="pin" style="left:${10 + (i * 37) % 80}%;top:${10 + (i * 53) % 80}%"></div>`);
+  });
+  return html;
+}
+const scroller = feed.parentElement;
+let loaded = 0;
+let loading = false;
+setTimeout(() => { feed.innerHTML = batch(0); }, 400);
+scroller.addEventListener('scroll', () => {
+  if (loading || loaded >= 2 || scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 150) return;
+  loading = true;
+  feed.insertAdjacentHTML('beforeend', '<div class="lXJj5c Hk4XGb" id="spinner" style="padding:16px;text-align:center;color:#70757a">Chargement…</div>');
+  setTimeout(() => {
+    document.getElementById('spinner').remove();
+    loaded++;
+    feed.insertAdjacentHTML('beforeend', batch(loaded));
+    if (loaded === 2) feed.insertAdjacentHTML('beforeend', '<div class="m6QErb XiKgde tLjsW eKbjU"><div class="end"><p class="fontBodyMedium"><span class="HlvSq">Vous êtes arrivé à la fin de la liste.</span></p></div></div>');
+    loading = false;
+  }, 700);
 });
-html += '<div class="m6QErb XiKgde tLjsW eKbjU"><div class="end"><p class="fontBodyMedium"><span class="HlvSq">Vous êtes arrivé à la fin de la liste.</span></p></div></div>';
-setTimeout(() => { feed.innerHTML = html; }, 400);
 </script>
 </body>
 </html>

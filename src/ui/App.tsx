@@ -2,6 +2,7 @@ import { ExportBar } from './components/ExportBar';
 import { Header } from './components/Header';
 import { HelpModal } from './components/HelpModal';
 import { ListNavigator } from './components/ListNavigator';
+import { PaginationPanel } from './components/PaginationPanel';
 import {
   DetailsSoon,
   EmptyState,
@@ -30,6 +31,7 @@ function ListMode() {
       {status === 'ready' && result && (
         <>
           <ListNavigator />
+          <PaginationPanel />
           <div className="mx-4 mb-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-neutral-200 shadow-soft dark:border-neutral-800">
             <DataTable columns={result.columns} rows={result.rows} />
           </div>

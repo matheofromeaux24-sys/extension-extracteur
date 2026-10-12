@@ -62,7 +62,7 @@
           <div class="products row">
 <!-- PRODUITS -->
           </div>
-          <nav class="pagination"><div class="col-md-4">Affichage 1-9 de 18 article(s)</div><div class="col-md-6 offset-md-2 pr-0"><ul class="page-list clearfix text-sm-center"><li class="current"><a rel="nofollow" href="https://boutique.example/3-vetements" class="disabled js-search-link">1</a></li><li><a rel="nofollow" href="https://boutique.example/3-vetements?page=2" class="js-search-link">2</a></li><li><a rel="next" href="https://boutique.example/3-vetements?page=2" class="next js-search-link">Suivant<i class="material-icons">&#xE315;</i></a></li></ul></div></nav>
+          <nav class="pagination"><div class="col-md-4">Affichage 1-9 de 18 article(s)</div><div class="col-md-6 offset-md-2 pr-0"><ul class="page-list clearfix text-sm-center"><li class="current"><a rel="nofollow" href="https://boutique.example/3-vetements" class="disabled js-search-link">1</a></li><li><a rel="nofollow" href="https://boutique.example/3-vetements?page=2" class="js-search-link">2</a></li></ul></div></nav>
         </div>
       </section>
     </section>
@@ -79,10 +79,19 @@ const products = [
   ['Chemise en lin', 42.00, null, ''], ['Robe d\'été fleurie', 49.90, 39.92, ''], ['Veste en jean', 69.00, null, 'Nouveau'],
   ['Pantalon chino', 45.00, null, ''], ['T-shirt basique bio', 15.00, 12.00, ''], ['Gilet en laine', 59.90, null, ''],
 ];
+// Pagination : ?page=1..2 ; sur la dernière page, « Suivant » est désactivé (comme dans le thème Classic).
+const page = Number(new URLSearchParams(location.search).get('page')) === 2 ? 2 : 1;
+if (page === 2) products.splice(0, products.length,
+  ['Polo piqué marine', 32.00, null, ''], ['Jupe plissée', 39.90, 31.92, ''], ['Short en coton', 25.00, null, 'Nouveau'],
+  ['Chemise à carreaux', 44.00, null, ''], ['Doudoune légère', 89.00, 71.20, ''], ['Bonnet en laine', 19.90, null, ''],
+  ['Écharpe en cachemire', 79.00, null, 'Nouveau'], ['Débardeur sport', 18.00, null, ''], ['Parka imperméable', 119.00, 95.20, '']);
+document.querySelector('.page-list').innerHTML = page === 1
+  ? '<li class="current"><a rel="nofollow" href="?page=1" class="disabled js-search-link">1</a></li><li><a rel="nofollow" href="?page=2" class="js-search-link">2</a></li><li><a rel="next" href="?page=2" class="next js-search-link">Suivant<i class="material-icons">&#xE315;</i></a></li>'
+  : '<li><a rel="prev" href="?page=1" class="previous js-search-link"><i class="material-icons">&#xE314;</i>Précédent</a></li><li><a rel="nofollow" href="?page=1" class="js-search-link">1</a></li><li class="current"><a rel="nofollow" href="?page=2" class="disabled js-search-link">2</a></li><li><a rel="next" href="?page=2" class="next disabled js-search-link">Suivant<i class="material-icons">&#xE315;</i></a></li>';
 const fmt = (v) => v.toFixed(2).replace('.', ',') + ' €';
 const list = document.querySelector('.products.row');
 list.innerHTML = products.map(([name, regular, promo, flag], i) => {
-  const id = i + 1;
+  const id = i + 1 + (page - 1) * 9;
   const slug = name.toLowerCase().normalize('NFD').replace(/[^a-z ]/g, '').replace(/ +/g, '-');
   const url = `https://boutique.example/vetements/${id}-${slug}.html`;
   // Une image sur trois utilise un chargement différé (data-src + image de remplacement).

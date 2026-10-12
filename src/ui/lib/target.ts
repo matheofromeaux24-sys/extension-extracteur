@@ -3,7 +3,7 @@
 import { sendToTab } from '../../shared/messaging';
 import type { UiMessage } from '../../shared/types';
 import { getState, setState } from '../store/useStore';
-import { analyze } from './controller';
+import { analyze, onPaginationProgress, restoreRunningJob } from './controller';
 
 let ownWindowId: number | undefined;
 
@@ -38,7 +38,9 @@ export async function initTargetTracking(): Promise<void> {
 
   const param = Number(new URLSearchParams(location.search).get('tabId'));
   const initial = Number.isInteger(param) && param > 0 ? param : await activeTabOfLastNormalWindow();
-  if (initial !== undefined) await setTarget(initial, { forceAnalyze: true });
+  // Fenêtre rouverte pendant une extraction multi-pages : on reprend son affichage.
+  const restored = await restoreRunningJob();
+  if (initial !== undefined) await setTarget(initial, { forceAnalyze: !restored });
 
   chrome.tabs.onActivated.addListener(({ tabId, windowId }) => {
     if (windowId !== ownWindowId) void setTarget(tabId);
@@ -66,6 +68,7 @@ export async function initTargetTracking(): Promise<void> {
 
   chrome.runtime.onMessage.addListener((msg: UiMessage) => {
     if (msg?.type === 'ui:setTarget') void setTarget(msg.tabId, { forceAnalyze: getState().status !== 'ready' });
+    if (msg?.type === 'paginate:progress') onPaginationProgress(msg.job, msg.rows, msg.reset);
   });
 
   // Fermeture de la fenêtre : on retire la surbrillance de la page.

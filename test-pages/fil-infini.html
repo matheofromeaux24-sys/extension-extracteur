@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Annonces immobilières – défilement infini</title>
+<!-- Défilement infini sur la page entière : 20 annonces de plus à chaque arrivée en bas (60 au total). -->
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0 auto; max-width: 760px; padding: 24px; }
+  .listing { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #eee; }
+  .listing img { width: 160px; height: 110px; background: #ddd; border-radius: 8px; }
+  .listing h2 { font-size: 17px; margin: 0 0 6px; }
+  .price { font-weight: 700; }
+  .loader { text-align: center; padding: 24px; color: #888; }
+</style>
+</head>
+<body>
+<h1>Appartements à louer</h1>
+<div class="feed" id="feed"></div>
+<div class="loader" id="loader"></div>
+<script>
+const villes = ['Paris 11e', 'Lyon 3e', 'Nantes', 'Bordeaux', 'Lille', 'Toulouse'];
+let count = 0;
+function load(n) {
+  let html = '';
+  for (let k = 0; k < n; k++, count++) {
+    const pieces = 1 + (count % 4);
+    html += `<article class="listing"><img src="/photos/${count}.jpg" alt=""><div class="body"><h2 class="title"><a href="/annonce/${count + 1}">Appartement ${pieces} pièce${pieces > 1 ? 's' : ''} – ${villes[count % villes.length]}</a></h2><div class="price">${(650 + count * 17).toLocaleString('fr-FR')} € / mois</div><div class="surface">${20 + count * 2} m²</div><time datetime="2024-10-${String(1 + (count % 28)).padStart(2, '0')}">${1 + (count % 28)} oct. 2024</time></div></article>`;
+  }
+  document.getElementById('feed').insertAdjacentHTML('beforeend', html);
+}
+load(20);
+let busy = false;
+window.addEventListener('scroll', () => {
+  if (busy || count >= 60 || window.innerHeight + window.scrollY < document.documentElement.scrollHeight - 200) return;
+  busy = true;
+  document.getElementById('loader').textContent = 'Chargement…';
+  setTimeout(() => {
+    load(20);
+    document.getElementById('loader').textContent = count >= 60 ? 'Toutes les annonces sont affichées.' : '';
+    busy = false;
+  }, 600);
+});
+</script>
+</body>
+</html>

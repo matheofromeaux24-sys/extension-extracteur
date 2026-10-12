@@ -76,7 +76,7 @@
         <footer class="entry-footer"><span class="cat-links">Catégorie : <a href="https://blog.example/category/ia/" rel="category tag">IA</a></span> <a class="more-link" href="https://blog.example/2024/09/rag/#more-390">Lire la suite</a></footer>
       </div>
     </article>
-    <nav class="navigation pagination" aria-label="Publications"><div class="nav-links"><span aria-current="page" class="page-numbers current">1</span><a class="page-numbers" href="/page/2/">2</a><a class="next page-numbers" href="/page/2/">Articles suivants</a></div></nav>
+    <div class="load-more-wrap" style="text-align:center"><button type="button" class="ajax-load-more button">Charger plus d’articles</button></div>
   </main>
   <aside id="secondary" class="widget-area">
     <section id="search-2" class="widget widget_search"><form role="search"><input type="search" placeholder="Rechercher…"></form></section>
@@ -86,5 +86,42 @@
   </aside>
 </div>
 <footer id="colophon" class="site-footer"><div class="site-info">© 2024 Le Blog Tech · Fièrement propulsé par WordPress</div></footer>
+<script>
+// « Charger plus » : 2 clics possibles, 5 articles à chaque fois (comme les extensions WordPress Ajax Load More).
+const older = [
+  ['Docker Compose : 10 astuces méconnues', 'dev', 'Julien Bernard'], ['Prompt engineering : les bonnes pratiques', 'ia', 'Thomas Martin'],
+  ['Phishing : reconnaître les arnaques de 2024', 'securite', 'Marie Lefèvre'], ['Rust pour les développeurs JavaScript', 'dev', 'Julien Bernard'],
+  ['Les agents IA expliqués simplement', 'ia', 'Thomas Martin'], ['Sauvegardes : la règle du 3-2-1', 'securite', 'Marie Lefèvre'],
+  ['CSS Grid ou Flexbox ?', 'dev', 'Julien Bernard'], ['Fine-tuning ou RAG ?', 'ia', 'Thomas Martin'],
+  ['VPN : utile ou marketing ?', 'securite', 'Marie Lefèvre'], ['Tester son code avec Vitest', 'dev', 'Julien Bernard'],
+];
+const cats = { dev: 'Développement', ia: 'IA', securite: 'Sécurité' };
+let shown = 0;
+document.querySelector('.ajax-load-more').addEventListener('click', (e) => {
+  const btn = e.currentTarget;
+  btn.textContent = 'Chargement…';
+  setTimeout(() => {
+    const html = older.slice(shown, shown + 5).map(([title, cat, author], k) => {
+      const id = 380 - (shown + k) * 7;
+      const slug = title.toLowerCase().normalize('NFD').replace(/[^a-z0-9 ]/g, '').trim().replace(/ +/g, '-');
+      const url = `https://blog.example/2024/08/${slug}/`;
+      const day = 28 - (shown + k) * 2;
+      return `<article id="post-${id}" class="post-${id} post type-post status-publish format-standard has-post-thumbnail hentry category-${cat}">
+        <div class="post-thumbnail"><a href="${url}"><img width="768" height="512" src="https://blog.example/wp-content/uploads/2024/08/${slug}-768x512.jpg" class="attachment-medium_large size-medium_large wp-post-image" alt=""></a></div>
+        <div class="entry-wrap">
+          <header class="entry-header"><h2 class="entry-title"><a href="${url}" rel="bookmark">${title}</a></h2>
+            <div class="entry-meta"><span class="posted-on">Publié le <a href="${url}" rel="bookmark"><time class="entry-date published" datetime="2024-08-${day}T09:00:00+02:00">${day} août 2024</time></a></span> <span class="byline">par <span class="author vcard"><a class="url fn n" href="https://blog.example/author/${author.split(' ')[0].toLowerCase()}/">${author}</a></span></span></div></header>
+          <div class="entry-summary"><p>Résumé de l’article « ${title} » : explications, exemples concrets et conseils pratiques pour aller plus loin sur le sujet.</p></div>
+          <footer class="entry-footer"><span class="cat-links">Catégorie : <a href="https://blog.example/category/${cat}/" rel="category tag">${cats[cat]}</a></span> <a class="more-link" href="${url}#more-${id}">Lire la suite</a></footer>
+        </div>
+      </article>`;
+    }).join('');
+    btn.parentElement.insertAdjacentHTML('beforebegin', html);
+    shown += 5;
+    btn.textContent = 'Charger plus d’articles';
+    if (shown >= older.length) btn.parentElement.remove();
+  }, 500);
+});
+</script>
 </body>
 </html>
