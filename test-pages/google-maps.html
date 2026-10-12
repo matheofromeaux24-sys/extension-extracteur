@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>restaurant lyon - Google Maps</title>
+<!-- Copie simplifiée du balisage du panneau de résultats Google Maps :
+     les résultats défilent dans un panneau interne (div[role=feed]) et non dans la fenêtre. -->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: Roboto, Arial, sans-serif; }
+  #app { display: flex; height: 100%; }
+  .w6VYqd { width: 408px; display: flex; flex-direction: column; border-right: 1px solid #ddd; }
+  #searchbox { padding: 12px; }
+  #searchbox input { width: 100%; padding: 10px; border-radius: 24px; border: 1px solid #ccc; }
+  .chips { display: flex; gap: 6px; padding: 0 12px 8px; overflow: hidden; }
+  .chips button { border: 1px solid #ccc; border-radius: 16px; background: #fff; padding: 4px 10px; font-size: 13px; white-space: nowrap; }
+  .m6QErb.DxyBCb { flex: 1; overflow-y: auto; }
+  .Nv2PK { position: relative; display: flex; padding: 12px 16px; gap: 12px; }
+  .hfpxzc { position: absolute; inset: 0; }
+  .qBF1Pd { font-size: 16px; font-weight: 500; }
+  .W4Efsd { color: #70757a; font-size: 14px; }
+  .p0Hhde img { width: 84px; height: 84px; border-radius: 8px; object-fit: cover; background: #eee; }
+  .TFQHme { height: 1px; background: #e8eaed; margin: 0 16px; }
+  #map { flex: 1; background: repeating-linear-gradient(45deg, #e5e3df, #e5e3df 20px, #f2efe9 20px, #f2efe9 40px); position: relative; }
+  .pin { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #ea4335; border: 2px solid #fff; }
+  .end { padding: 24px; text-align: center; color: #70757a; font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="w6VYqd">
+    <div id="searchbox"><input aria-label="Rechercher dans Google Maps" value="restaurant lyon"></div>
+    <div class="chips" role="toolbar">
+      <button>Prix</button><button>Note</button><button>Cuisine</button><button>Ouvert maintenant</button><button>Tous les filtres</button>
+    </div>
+    <div class="m6QErb DxyBCb kA9KIf dS8AEf XiKgde ecceSd" tabindex="-1">
+      <div class="m6QErb DxyBCb kA9KIf dS8AEf XiKgde ecceSd" role="feed" aria-label="Résultats pour restaurant lyon"></div>
+    </div>
+  </div>
+  <div id="map" aria-label="Carte"></div>
+</div>
+<script>
+const names = ['Le Bouchon des Filles', 'Daniel et Denise Saint-Jean', 'Les Fines Gueules', 'Café Comptoir Abel', 'Le Kitchen Café', 'Brasserie Georges', 'La Mère Brazier', 'Le Comptoir du Vin', 'Bouillon Baratte', 'Les Apothicaires', 'Restaurant Paul Bocuse', 'Le Passe Temps', 'Pierre Orsi', 'Têtedoie', 'Le Musée', 'Chez Hugon'];
+const types = ['Restaurant français', 'Bouchon lyonnais', 'Bistrot', 'Brasserie', 'Restaurant gastronomique'];
+const streets = ['Rue Mercière', 'Rue Saint-Jean', 'Quai Saint-Antoine', 'Rue Guénot', 'Rue Chavanne', 'Cours de Verdun', 'Rue Royale'];
+const feed = document.querySelector('[role=feed]');
+const map = document.getElementById('map');
+let html = '';
+names.forEach((n, i) => {
+  const rating = (4 + (i % 9) / 10).toFixed(1).replace('.', ',');
+  const reviews = (300 + i * 457).toLocaleString('fr-FR');
+  const price = ['10-20 €', '20-30 €', '30-50 €', '€€€€'][i % 4];
+  const slug = encodeURIComponent(n).replace(/%20/g, '+');
+  html += `
+  <div jsaction="mouseover:pane.wfvdle${i}">
+    <div class="Nv2PK THOPZb CpccDe" jsaction="mouseover:pane.wfvdle${i}">
+      <a class="hfpxzc" aria-label="${n}" href="https://www.google.com/maps/place/${slug}/data=!4m7!3m6!1s0x47f4ea${(1000 + i).toString(16)}" jsaction="pane.wfvdle${i}"></a>
+      <div class="bfdHYd Ppzolf OFBs3e"><div class="lI9IFe"><div class="y7PRA"><div><div><div class="UaQhfb fontBodyMedium">
+        <div class="NrDZNb"><div class="qBF1Pd fontHeadlineSmall">${n}</div></div>
+        <div class="W4Efsd"><div class="AJB7ye"><span class="e4rVHe fontBodyMedium"><span role="img" class="ZkP5Je" aria-label="${rating} étoiles ${reviews} avis"><span class="MW4etd" aria-hidden="true">${rating}</span><div class="QBUL8c"></div><span class="UY7F9" aria-hidden="true">(${reviews})</span></span></span><span class="wcldff fontBodyMedium"><span aria-hidden="true">·</span><span aria-label="Prix : ${price}">${price}</span></span></div></div>
+        <div class="W4Efsd"><div class="W4Efsd"><span><span>${types[i % types.length]}</span></span><span> <span aria-hidden="true">·</span> <span class="google-symbols" aria-hidden="true"></span> </span><span><span>${3 + i * 4} ${streets[i % streets.length]}</span></span></div>
+          <div class="W4Efsd"><span><span><span style="color:rgba(24,128,56,1.00)">Ouvert</span><span style="font-weight:400"> ⋅ Ferme à ${21 + (i % 3)}:30</span></span></span></div></div>
+      </div></div></div></div>
+      <div class="SpFAAb"><div class="p0Hhde FQ2IWe"><img src="https://lh5.googleusercontent.com/p/AF1Qip${i}x${i * 31}=w80-h106-k-no" alt=""></div></div>
+      </div></div>
+    </div>
+  </div>
+  <div class="TFQHme "></div>`;
+  map.insertAdjacentHTML('beforeend', `<div class="pin" style="left:${10 + (i * 37) % 80}%;top:${10 + (i * 53) % 80}%"></div>`);
+});
+html += '<div class="m6QErb XiKgde tLjsW eKbjU"><div class="end"><p class="fontBodyMedium"><span class="HlvSq">Vous êtes arrivé à la fin de la liste.</span></p></div></div>';
+setTimeout(() => { feed.innerHTML = html; }, 400);
+</script>
+</body>
+</html>

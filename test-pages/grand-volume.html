@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Annuaire – 10 000 fiches</title>
+<!-- Test de performance : 10 000 cartes générées en JavaScript. -->
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px; }
+  .card { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid #eee; }
+  .card img { width: 48px; height: 48px; background: #ddd; border-radius: 6px; }
+</style>
+</head>
+<body>
+<h1>Annuaire des entreprises</h1>
+<div id="results"></div>
+<script>
+const villes = ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nantes', 'Lille', 'Bordeaux', 'Rennes'];
+const parts = [];
+for (let i = 1; i <= 10000; i++) {
+  parts.push(`<div class="card"><img src="/logos/${i}.png" alt=""><div class="info"><h3 class="name"><a href="/entreprise/${i}">Entreprise n°${i}</a></h3><span class="city">${villes[i % villes.length]}</span> · <span class="phone">01 ${String(10 + (i % 90))} ${String(i % 100).padStart(2, '0')} ${String((i * 7) % 100).padStart(2, '0')} ${String((i * 13) % 100).padStart(2, '0')}</span><div class="email">contact${i}@entreprise${i}.fr</div></div></div>`);
+}
+document.getElementById('results').innerHTML = parts.join('');
+</script>
+</body>
+</html>

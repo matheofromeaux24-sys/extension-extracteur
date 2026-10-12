@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Amazon.fr : casque audio</title>
+<!-- Copie simplifiée du balisage d'une page de résultats Amazon (structure 2024-2025),
+     générée en JavaScript comme sur le vrai site. Sert aux tests de détection. -->
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; color: #0f1111; }
+  #navbar { background: #131921; color: #fff; padding: 10px 16px; }
+  #nav-xshop a { color: #fff; margin-right: 12px; font-size: 13px; text-decoration: none; }
+  .s-desktop-width-max { display: flex; }
+  #s-refinements { width: 240px; padding: 12px; font-size: 13px; }
+  #s-refinements ul { list-style: none; padding: 0; margin: 0 0 12px; }
+  #s-refinements li { padding: 2px 0; }
+  .s-main-slot { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 12px; }
+  .s-result-item.s-widget { grid-column: 1 / -1; }
+  .puis-card-container { border: 1px solid #ddd; border-radius: 6px; padding: 8px; }
+  .s-image { width: 100%; height: 180px; object-fit: contain; background: #f3f3f3; }
+  .a-offscreen { position: absolute; left: -10000px; }
+  .a-price { font-size: 20px; }
+  .a-text-price { color: #565959; text-decoration: line-through; font-size: 13px; }
+  h2 { font-size: 15px; margin: 6px 0; }
+  .a-button { background: #ffd814; border-radius: 20px; padding: 4px 10px; font-size: 12px; border: 0; }
+  #navFooter ul { list-style: none; display: inline-block; vertical-align: top; margin: 0 30px; }
+</style>
+</head>
+<body>
+<header id="navbar" role="banner">
+  <div id="nav-logo"><a href="/ref=nav_logo">Amazon.fr</a></div>
+  <div id="nav-xshop">
+    <a href="/deals">Ventes Flash</a><a href="/bestsellers">Meilleures ventes</a><a href="/prime">Prime</a>
+    <a href="/gp/help">Service Client</a><a href="/new-releases">Dernières Nouveautés</a><a href="/livres">Livres</a>
+  </div>
+</header>
+<div class="s-desktop-width-max s-desktop-content">
+  <div id="s-refinements" class="s-refinements">
+    <span class="a-text-bold">Marques</span>
+    <ul id="filter-brand"></ul>
+    <span class="a-text-bold">Avis clients</span>
+    <ul><li><a href="#">4 étoiles et plus</a></li><li><a href="#">3 étoiles et plus</a></li></ul>
+  </div>
+  <div id="search">
+    <div class="s-main-slot s-result-list s-search-results sg-row"></div>
+  </div>
+</div>
+<div id="navFooter" class="navLeftFooter" role="contentinfo">
+  <ul><li><a href="/careers">Carrières</a></li><li><a href="/about">À propos</a></li><li><a href="/press">Presse</a></li><li><a href="/sustain">Durabilité</a></li></ul>
+  <ul><li><a href="/sell">Vendre sur Amazon</a></li><li><a href="/fba">Expédié par Amazon</a></li><li><a href="/ads">Publicité</a></li><li><a href="/aff">Partenaires</a></li></ul>
+</div>
+<script>
+const brands = ['Sony', 'JBL', 'Bose', 'Sennheiser', 'Apple', 'Soundcore', 'Philips', 'Marshall', 'Jabra', 'Beats', 'Skullcandy', 'Audio-Technica'];
+document.getElementById('filter-brand').innerHTML = brands.map(b => `<li><span class="a-list-item"><a class="a-link-normal s-navigation-item" href="/s?rh=p_89:${b}"><span class="a-size-base">${b}</span></a></span></li>`).join('');
+
+const models = ['WH-1000XM5 Casque sans fil à réduction de bruit', 'Tune 520BT Casque supra-auriculaire Bluetooth', 'QuietComfort Ultra Headphones', 'Momentum 4 Wireless', 'AirPods Max - Argent', 'Life Q30 Casque Bluetooth à réduction active', 'TAH4205 Casque sans fil', 'Major V Casque Bluetooth pliable', 'Evolve2 65 Casque professionnel', 'Studio Pro Casque sans fil', 'Crusher Evo', 'ATH-M50x Casque de monitoring studio'];
+const slot = document.querySelector('.s-main-slot');
+let html = '<div class="s-result-item s-widget s-widget-spacing-large" data-component-type="s-messaging-widget"><span class="a-size-medium-plus">Résultats</span><div>Vérifiez chaque page produit pour connaître les autres options d\'achat.</div></div>';
+for (let i = 0; i < 24; i++) {
+  const brand = brands[i % brands.length];
+  const title = `${brand} ${models[i % models.length]}${i >= 12 ? ' (Reconditionné)' : ''}`;
+  const whole = 29 + i * 13;
+  const frac = String((i * 37) % 100).padStart(2, '0');
+  const asin = 'B0' + (1000000 + i * 7919).toString(36).toUpperCase().padStart(8, 'X');
+  const sponsored = i % 7 === 2;
+  const hasOld = i % 3 === 0;
+  const rating = (3.6 + (i % 14) / 10).toFixed(1).replace('.', ',');
+  if (i === 8) html += '<div class="s-result-item s-widget s-widget-spacing-large AdHolder" data-component-type="sp-sponsored-result"><span>Les clients ont aussi regardé</span><div><a href="/dp/AAA">Housse de casque</a> <a href="/dp/BBB">Support casque</a></div></div>';
+  html += `
+  <div data-asin="${asin}" data-index="${i + 1}" data-component-type="s-search-result" class="sg-col-4-of-24 sg-col-4-of-12 s-result-item s-asin sg-col-4-of-16 sg-col s-widget-spacing-small sg-col-4-of-20${sponsored ? ' AdHolder' : ''}">
+    <div class="sg-col-inner"><div cel_widget_id="MAIN-SEARCH_RESULTS-${i + 1}" class="s-widget-container s-spacing-small s-widget-container-height-small celwidget slot=MAIN template=SEARCH_RESULTS widgetId=search-results_${i + 1}">
+      <div data-component-type="s-impression-logger" class="rush-component s-featured-result-item"><span class="a-declarative">
+      <div class="puis-card-container s-card-container s-overflow-hidden aok-relative puis-include-content-margin puis puis-v1x2 s-latency-cf-section puis-card-border">
+        <div class="a-section a-spacing-base">
+          <div class="s-product-image-container aok-relative s-text-center s-image-overlay-grey puis-image-overlay-grey s-padding-left-small s-padding-right-small puis-spacing-small s-height-equalized puis puis-v1x2">
+            <span data-component-type="s-product-image" class="rush-component"><a class="a-link-normal s-no-outline" href="/${brand}-casque/dp/${asin}/ref=sr_1_${i + 1}">
+              <div class="a-section aok-relative s-image-square-aspect"><img class="s-image" src="https://m.media-amazon.com/images/I/${asin}._AC_UY218_.jpg" srcset="https://m.media-amazon.com/images/I/${asin}._AC_UY218_.jpg 1x, https://m.media-amazon.com/images/I/${asin}._AC_UY327_QL65_.jpg 1.5x, https://m.media-amazon.com/images/I/${asin}._AC_UY436_QL65_.jpg 2x" alt="${title}" data-image-index="${i + 1}"></div>
+            </a></span>
+          </div>
+          <div class="a-section a-spacing-small puis-padding-left-small puis-padding-right-small">
+            ${sponsored ? '<div class="a-row a-spacing-micro"><span class="puis-label-popover-default"><span class="a-color-secondary">Sponsorisé</span></span></div>' : ''}
+            <div data-cy="title-recipe" class="a-section a-spacing-none a-spacing-top-small s-title-instructions-style">
+              <a class="a-link-normal s-line-clamp-4 s-link-style a-text-normal" href="/${brand}-casque/dp/${asin}/ref=sr_1_${i + 1}"><h2 aria-label="${title}" class="a-size-base-plus a-spacing-none a-color-base a-text-normal"><span>${title}</span></h2></a>
+            </div>
+            <div data-cy="reviews-block" class="a-section a-spacing-none a-spacing-top-micro">
+              <div class="a-row a-size-small">
+                <span class="a-declarative"><a aria-label="${rating} sur 5 étoiles, notes" href="javascript:void(0)" role="button" class="a-popover-trigger a-declarative"><i data-cy="reviews-ratings-slot" class="a-icon a-icon-star-small a-star-small-4-5"><span class="a-icon-alt">${rating} sur 5 étoiles</span></i></a></span>
+                <span data-component-type="s-client-side-analytics" class="rush-component"><a aria-label="${(1200 + i * 731).toLocaleString('fr-FR')} évaluations" class="a-link-normal s-underline-text s-underline-link-text s-link-style" href="/dp/${asin}#customerReviews"><span class="a-size-base s-underline-text">${(1200 + i * 731).toLocaleString('fr-FR')}</span></a></span>
+              </div>
+              <div class="a-row a-size-base"><span class="a-size-base a-color-secondary">${200 + i * 10}+ achetés au cours du mois dernier</span></div>
+            </div>
+            <div data-cy="price-recipe" class="a-section a-spacing-none a-spacing-top-small s-price-instructions-style">
+              <div class="a-row a-size-base a-color-base"><div class="a-row">
+                <a class="a-link-normal s-no-hover s-underline-text s-underline-link-text s-link-style a-text-normal" href="/dp/${asin}/ref=sr_1_${i + 1}">
+                  <span class="a-price" data-a-size="xl" data-a-color="base"><span class="a-offscreen">${whole},${frac} €</span><span aria-hidden="true"><span class="a-price-whole">${whole}<span class="a-price-decimal">,</span></span><span class="a-price-fraction">${frac}</span><span class="a-price-symbol">€</span></span></span>
+                  ${hasOld ? `<div class="a-section aok-inline-block"><span class="a-size-base a-color-secondary">Prix conseillé : </span><span class="a-price a-text-price" data-a-size="b" data-a-strike="true" data-a-color="secondary"><span class="a-offscreen">${whole + 40},00 €</span><span aria-hidden="true">${whole + 40},00 €</span></span></div>` : ''}
+                </a>
+              </div></div>
+            </div>
+            <div data-cy="delivery-recipe" class="a-section a-spacing-none a-spacing-top-micro"><div class="a-row a-size-base a-color-secondary s-align-children-center"><span aria-label="Livraison GRATUITE mer. ${15 + (i % 5)} oct.">Livraison GRATUITE <span class="a-color-base a-text-bold">mer. ${15 + (i % 5)} oct.</span></span></div></div>
+            <div class="puis-atcb-container"><button class="a-button a-button-primary" type="button">Ajouter au panier</button></div>
+          </div>
+        </div>
+      </div></span></div>
+    </div></div>
+  </div>`;
+}
+html += '<div class="s-result-item s-widget s-widget-spacing-large" data-component-type="s-pagination"><span class="s-pagination-strip"><span class="s-pagination-item s-pagination-selected">1</span><a class="s-pagination-item s-pagination-button" href="/s?k=casque+audio&page=2">2</a><a class="s-pagination-item s-pagination-button" href="/s?k=casque+audio&page=3">3</a><a class="s-pagination-item s-pagination-next s-pagination-button s-pagination-separator" href="/s?k=casque+audio&page=2">Suivant</a></span></div>';
+// Les résultats arrivent un peu après le chargement, comme sur une SPA.
+setTimeout(() => { slot.innerHTML = html; }, 300);
+</script>
+</body>
+</html>

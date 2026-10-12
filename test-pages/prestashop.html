@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Vêtements - Ma boutique PrestaShop</title>
+<!-- Copie simplifiée du thème « Classic » de PrestaShop 1.7 / 8 (page catégorie). -->
+<style>
+  body { font-family: "Noto Sans", Arial, sans-serif; margin: 0; background: #f6f6f6; color: #232323; }
+  #header { background: #fff; padding: 12px 24px; }
+  .top-menu { list-style: none; display: flex; gap: 20px; padding: 0; margin: 8px 0 0; }
+  .top-menu a { color: #232323; text-decoration: none; text-transform: uppercase; font-size: 14px; }
+  #wrapper .container { display: flex; gap: 24px; padding: 24px; }
+  #left-column { width: 25%; background: #fff; padding: 12px; font-size: 14px; }
+  #left-column ul { list-style: none; padding: 0; }
+  #content-wrapper { flex: 1; }
+  .products.row { display: flex; flex-wrap: wrap; margin: 0 -10px; }
+  .js-product.product { width: 33.33%; padding: 10px; box-sizing: border-box; }
+  .product-miniature { background: #fff; }
+  .thumbnail-container { position: relative; }
+  .product-thumbnail img { width: 100%; aspect-ratio: 1; object-fit: cover; background: #eee; display: block; }
+  .highlighted-informations { display: none; }
+  .product-flags { position: absolute; top: 8px; left: 0; list-style: none; padding: 0; margin: 0; }
+  .product-flag { background: #24b9d7; color: #fff; padding: 2px 8px; font-size: 12px; margin-bottom: 4px; }
+  .product-flag.discount { background: #f39d72; }
+  .product-description { padding: 12px; text-align: center; }
+  .product-title { font-size: 15px; margin: 0 0 6px; font-weight: 400; }
+  .product-title a { color: #7a7a7a; text-decoration: none; }
+  .regular-price { color: #7a7a7a; text-decoration: line-through; font-size: 13px; margin-right: 6px; }
+  .price { color: #232323; font-weight: 700; }
+  .pagination .page-list { list-style: none; display: flex; gap: 8px; padding: 0; }
+  #footer { background: #fff; padding: 24px; display: flex; gap: 60px; font-size: 14px; }
+  #footer ul { list-style: none; padding: 0; }
+</style>
+</head>
+<body id="category" class="lang-fr country-fr currency-eur layout-left-column page-category category-id-3">
+<main>
+<header id="header">
+  <div class="header-top"><a href="https://boutique.example/"><img class="logo img-fluid" src="/img/logo.png" alt="Ma boutique"></a></div>
+  <div class="menu js-top-menu position-static hidden-sm-down" id="_desktop_top_menu">
+    <ul class="top-menu" id="top-menu" data-depth="0">
+      <li class="category" id="category-3"><a class="dropdown-item" href="https://boutique.example/3-vetements" data-depth="0">Vêtements</a></li>
+      <li class="category" id="category-6"><a class="dropdown-item" href="https://boutique.example/6-accessoires" data-depth="0">Accessoires</a></li>
+      <li class="category" id="category-9"><a class="dropdown-item" href="https://boutique.example/9-art" data-depth="0">Art</a></li>
+      <li class="cms-page" id="cms-page-4"><a class="dropdown-item" href="https://boutique.example/content/4-a-propos" data-depth="0">À propos</a></li>
+    </ul>
+  </div>
+</header>
+<section id="wrapper"><div class="container">
+  <div id="left-column" class="col-xs-12 col-sm-4 col-md-3">
+    <div class="block-categories hidden-sm-down"><ul class="category-top-menu"><li><a class="text-uppercase h6" href="https://boutique.example/3-vetements">Vêtements</a></li><li><ul class="category-sub-menu"><li data-depth="0"><a href="https://boutique.example/4-hommes">Hommes</a></li><li data-depth="0"><a href="https://boutique.example/5-femmes">Femmes</a></li></ul></li></ul></div>
+    <div id="search_filters_wrapper"><div id="search_filters"><p class="text-uppercase h6 hidden-sm-down">Filtrer par</p>
+      <section class="facet clearfix"><p class="h6 facet-title hidden-sm-down">Taille</p><ul id="facet_1"><li><label class="facet-label" for="f1"><input id="f1" type="checkbox"><a href="?q=Taille-S" class="_gray-darker search-link js-search-link" rel="nofollow">S<span class="magnitude">(2)</span></a></label></li><li><label class="facet-label" for="f2"><input id="f2" type="checkbox"><a href="?q=Taille-M" class="_gray-darker search-link js-search-link" rel="nofollow">M<span class="magnitude">(2)</span></a></label></li><li><label class="facet-label" for="f3"><input id="f3" type="checkbox"><a href="?q=Taille-L" class="_gray-darker search-link js-search-link" rel="nofollow">L<span class="magnitude">(2)</span></a></label></li></ul></section>
+      <section class="facet clearfix"><p class="h6 facet-title hidden-sm-down">Couleur</p><ul id="facet_2"><li><a href="?q=Couleur-Blanc" rel="nofollow">Blanc<span class="magnitude">(3)</span></a></li><li><a href="?q=Couleur-Noir" rel="nofollow">Noir<span class="magnitude">(4)</span></a></li><li><a href="?q=Couleur-Rouge" rel="nofollow">Rouge<span class="magnitude">(1)</span></a></li></ul></section>
+    </div></div>
+  </div>
+  <div id="content-wrapper" class="js-content-wrapper left-column col-xs-12 col-sm-8 col-md-9">
+    <section id="main">
+      <div id="js-product-list-header"><div class="block-category card card-block"><h1 class="h1">Vêtements</h1><div class="block-category-inner"><div id="category-description" class="text-muted"><p>Découvrez nos collections pour hommes et femmes.</p></div></div></div></div>
+      <section id="products">
+        <div id="js-product-list-top" class="row products-selection"><div class="col-md-6 hidden-sm-down total-products"><p>Il y a 9 produits.</p></div></div>
+        <div id="js-product-list">
+          <div class="products row">
+<!-- PRODUITS -->
+          </div>
+          <nav class="pagination"><div class="col-md-4">Affichage 1-9 de 18 article(s)</div><div class="col-md-6 offset-md-2 pr-0"><ul class="page-list clearfix text-sm-center"><li class="current"><a rel="nofollow" href="https://boutique.example/3-vetements" class="disabled js-search-link">1</a></li><li><a rel="nofollow" href="https://boutique.example/3-vetements?page=2" class="js-search-link">2</a></li><li><a rel="next" href="https://boutique.example/3-vetements?page=2" class="next js-search-link">Suivant<i class="material-icons">&#xE315;</i></a></li></ul></div></nav>
+        </div>
+      </section>
+    </section>
+  </div>
+</div></section>
+<footer id="footer" class="js-footer">
+  <div class="links"><p class="h3">Produits</p><ul><li><a href="/promotions">Promotions</a></li><li><a href="/nouveaux-produits">Nouveaux produits</a></li><li><a href="/meilleures-ventes">Meilleures ventes</a></li></ul></div>
+  <div class="links"><p class="h3">Notre société</p><ul><li><a href="/content/1-livraison">Livraison</a></li><li><a href="/content/2-mentions-legales">Mentions légales</a></li><li><a href="/content/3-cgv">Conditions d'utilisation</a></li><li><a href="/contactez-nous">Contactez-nous</a></li></ul></div>
+</footer>
+</main>
+<script>
+const products = [
+  ['T-shirt imprimé colibri', 23.90, 19.12, 'Nouveau'], ['Pull imprimé colibri', 35.90, 28.72, ''], ['Sweat ours brun', 29.00, null, 'Nouveau'],
+  ['Chemise en lin', 42.00, null, ''], ['Robe d\'été fleurie', 49.90, 39.92, ''], ['Veste en jean', 69.00, null, 'Nouveau'],
+  ['Pantalon chino', 45.00, null, ''], ['T-shirt basique bio', 15.00, 12.00, ''], ['Gilet en laine', 59.90, null, ''],
+];
+const fmt = (v) => v.toFixed(2).replace('.', ',') + ' €';
+const list = document.querySelector('.products.row');
+list.innerHTML = products.map(([name, regular, promo, flag], i) => {
+  const id = i + 1;
+  const slug = name.toLowerCase().normalize('NFD').replace(/[^a-z ]/g, '').replace(/ +/g, '-');
+  const url = `https://boutique.example/vetements/${id}-${slug}.html`;
+  // Une image sur trois utilise un chargement différé (data-src + image de remplacement).
+  const img = i % 3 === 2
+    ? `<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://boutique.example/${id}-home_default/${slug}.jpg" class="lazyload" alt="${name}" width="250" height="250">`
+    : `<img src="https://boutique.example/${id}-home_default/${slug}.jpg" alt="${name}" loading="lazy" data-full-size-image-url="https://boutique.example/${id}-large_default/${slug}.jpg" width="250" height="250">`;
+  return `
+  <div class="js-product product col-xs-12 col-sm-6 col-xl-4">
+    <article class="product-miniature js-product-miniature" data-id-product="${id}" data-id-product-attribute="${id * 3}">
+      <div class="thumbnail-container">
+        <div class="thumbnail-top">
+          <a href="${url}" class="thumbnail product-thumbnail">${img}</a>
+          <div class="highlighted-informations no-variants"><a class="quick-view js-quick-view" href="#" data-link-action="quickview"><i class="material-icons search">&#xE8B6;</i> Aperçu rapide</a></div>
+        </div>
+        <div class="product-description">
+          <h2 class="h3 product-title"><a href="${url}" content="${url}">${name}</a></h2>
+          <div class="product-price-and-shipping">
+            ${promo ? `<span class="regular-price" aria-label="Prix de base">${fmt(regular)}</span><span class="discount-percentage discount-product">-20%</span>` : ''}
+            <span class="price" aria-label="Prix">${fmt(promo ?? regular)}</span>
+          </div>
+        </div>
+        <ul class="product-flags js-product-flags">
+          ${promo ? '<li class="product-flag discount">-20%</li>' : ''}${flag ? `<li class="product-flag new">${flag}</li>` : ''}
+        </ul>
+      </div>
+    </article>
+  </div>`;
+}).join('');
+</script>
+</body>
+</html>
