@@ -14,7 +14,6 @@
     "serve:test": "npx --yes serve test-pages -l 5173"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.133.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@tanstack/react-virtual": "^3.13.0",
     "react": "^18.3.1",

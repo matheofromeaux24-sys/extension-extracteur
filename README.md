@@ -53,20 +53,25 @@ La colonne **Vidéo** contient l'adresse du fichier vidéo quand la page la four
 
 Autres reconnaissances automatiques : **Statut** (Active / Inactive, Ouvert…), **Bouton (CTA)** (Acheter, En savoir plus…), et les libellés de la page (« Identifiant dans la bibliothèque : 123 » donne une colonne « Identifiant dans la bibliothèque » contenant « 123 »).
 
-### Fonctions IA (Claude)
+### Fonctions IA (Google Gemini, gratuit)
 
 Une barre d'outils au-dessus du tableau propose :
 
 | Outil | Ce qu'il fait |
 |---|---|
-| **Analyse IA** | Pour chaque ligne (une publicité, par exemple) : angle marketing, accroche, offre, cible, ton, **texte écrit sur le visuel** et **description du visuel** (l'image ou l'aperçu de la vidéo est envoyé à Claude). 7 colonnes ajoutées en tête du tableau. |
+| **Analyse IA** | Pour chaque ligne (une publicité, par exemple) : angle marketing, accroche, offre, cible, ton, **texte écrit sur le visuel** et **description du visuel** (l'image ou l'aperçu de la vidéo est envoyé à Gemini). 7 colonnes ajoutées en tête du tableau. |
 | **Colonnes IA** | Vous décrivez en français ce que vous voulez (« le prix en nombre et la remise en % », « sépare la ville et le code postal »…) ; l'IA définit les colonnes puis les remplit ligne par ligne, à partir des colonnes existantes et du texte complet de chaque élément. |
 | **Score pub gagnante** | Calcul **local, sans IA ni clé** : durée de diffusion, statut actif, nombre de versions (« plusieurs versions », « N publicités utilisent ce contenu »), textes réutilisés. Ajoute « Score pub gagnante » (0-100), « Jours de diffusion » et « Signaux », et classe les lignes de la plus à la moins performante. |
 | **Synthèse** | Rapport stratégique rédigé par l'IA (formats, messages et angles, offres, rythme, pubs les plus performantes, recommandations), affiché au fil de l'écriture, copiable et téléchargeable en Markdown. |
 
-**Réglages (⚙ en haut à droite)** : collez votre clé d'API Anthropic (console.anthropic.com → API Keys) et choisissez le modèle : Claude Opus 5.5 (le plus précis, par défaut), Sonnet 5.5 (2× moins cher) ou Haiku 5.5 (très économique). La clé reste dans ce navigateur ; les données partent directement vers l'API Anthropic, sans autre serveur. Avant chaque analyse, le nombre de requêtes et le **coût estimé** sont affichés. Les réponses sont validées par schéma JSON (sorties structurées) ; en cas de refus du modèle, l'API bascule automatiquement sur un modèle de repli.
+**Réglages (⚙ en haut à droite)** : créez une **clé gratuite** sur [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (compte Google, sans carte bancaire), collez-la et cliquez sur « Tester la clé ». Deux modèles de l'offre gratuite : **Gemini Flash** (le meilleur, par défaut) et **Gemini Flash-Lite** (plus rapide, quota plus large). Les alias `gemini-flash-latest` / `gemini-flash-lite-latest` suivent automatiquement la dernière version de Google.
 
-Limite : Claude analyse les images mais pas le son ni la vidéo elle-même ; pour une pub vidéo, c'est l'image d'aperçu qui est analysée.
+- **Gratuit, avec des quotas** : environ 10 requêtes par minute et un plafond quotidien (selon Google). L'extension espace les requêtes automatiquement et relance après une limite passagère ; si le quota du jour est épuisé, un message l'indique.
+- **Confidentialité** : la clé reste dans ce navigateur ; les données partent directement vers Google. Dans l'offre gratuite, Google peut utiliser les contenus envoyés pour améliorer ses modèles.
+- **Images** : l'extension télécharge chaque visuel, le réduit (768 px) et l'envoie avec le texte. Au lancement, Chrome demande l'accès au site qui héberge les images (par exemple `fbcdn.net` pour Meta) ; sans cet accès, l'analyse se fait sur le texte seul.
+- Les réponses sont structurées par schéma JSON (sortie structurée de Gemini).
+
+Limite : l'IA analyse les images mais pas le son ni la vidéo elle-même ; pour une pub vidéo, c'est l'image d'aperçu qui est analysée.
 
 ### Choisir soi-même le bloc à extraire (avis, commentaires…)
 

@@ -1,7 +1,7 @@
 // Fonctions IA appliquées au tableau : analyse des publicités, colonnes en
 // langage naturel et synthèse stratégique.
 
-import { askJson, askText, estimateCost, pool, type AiModel, type Part } from '../../shared/ai';
+import { askJson, askText, estimateMinutes, imageOrigins, pool, type AiModel, type Part } from '../../shared/ai';
 import { messages } from '../../shared/i18n';
 import { RAW_KEY, type Column, type ExtractResult, type Row } from '../../shared/types';
 
@@ -113,15 +113,22 @@ function adSchema() {
   };
 }
 
-const AD_BATCH = 8;
+const AD_BATCH = 10;
 
-export function adAnalysisEstimate(result: ExtractResult, model: AiModel): { requests: number; cost: number; images: number } {
-  const n = result.rows.length;
-  const images = result.rows.filter((r) => mainImage(r, result.columns)).length;
-  const textTokens = result.rows.reduce((s, r) => s + rowText(r, result.columns).length / 3.5, 0);
-  const input = textTokens + images * 1200 + Math.ceil(n / AD_BATCH) * 600;
-  const output = n * 220;
-  return { requests: Math.ceil(n / AD_BATCH), cost: estimateCost(model, input, output), images };
+/** Adresses des visuels qui seront analysés. */
+export function adImageUrls(result: ExtractResult): string[] {
+  return result.rows.map((r) => mainImage(r, result.columns)).filter((u): u is string => !!u);
+}
+
+export function adAnalysisEstimate(result: ExtractResult, model: AiModel): { requests: number; minutes: number; images: number; domains: string[] } {
+  const requests = Math.ceil(result.rows.length / AD_BATCH);
+  const urls = adImageUrls(result);
+  return {
+    requests,
+    minutes: estimateMinutes(model, requests),
+    images: urls.length,
+    domains: imageOrigins(urls).map((o) => o.replace(/^https?:\/\/(\*\.)?/, '').replace(/\/\*$/, '')),
+  };
 }
 
 export async function analyzeAds(
@@ -157,7 +164,6 @@ export async function analyzeAds(
           system: AD_SYSTEM,
           parts,
           schema: adSchema(),
-          effort: 'medium',
           signal,
         });
         for (const item of out.items) {
@@ -218,14 +224,13 @@ export async function planNlColumns(instruction: string, result: ExtractResult, 
       required: ['columns'],
       additionalProperties: false,
     },
-    effort: 'medium',
     maxTokens: 4000,
     signal,
   });
   return out.columns.slice(0, 8).filter((c) => c.name.trim());
 }
 
-const NL_BATCH = 15;
+const NL_BATCH = 20;
 
 export async function fillNlColumns(
   plan: NlColumnPlan[],
@@ -272,7 +277,6 @@ export async function fillNlColumns(
           system: NL_FILL_SYSTEM,
           parts: [{ type: 'text', text: `Colonnes à remplir :\n${spec}\n\n${text}` }],
           schema,
-          effort: 'low',
           signal,
         });
         for (const r of out.rows) {
@@ -341,5 +345,5 @@ export async function synthesize(result: ExtractResult, onText: (full: string) =
     .join('\n');
   const sample = rows.slice(0, 120).map((r, i) => `#${i + 1}\n${rowText(r, columns, 250).replace(/Texte complet de l'élément : .*/s, '')}`);
   const context = `Source : ${result.page.title} (${result.page.domain})\nNombre d'éléments : ${rows.length}\n\nRépartitions :\n${stats || '(aucune)'}\n\nÉléments (${Math.min(120, rows.length)} premiers) :\n${sample.join('\n\n')}`;
-  return askText({ system: SYNTHESIS_SYSTEM, parts: [{ type: 'text', text: context }], effort: 'high', onText, signal });
+  return askText({ system: SYNTHESIS_SYSTEM, parts: [{ type: 'text', text: context }], onText, signal });
 }

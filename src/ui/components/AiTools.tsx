@@ -2,9 +2,9 @@
 // et fenêtres associées (réglages, confirmation, saisie, rapport).
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AI_MODELS, getAiSettings, saveAiSettings, testAiKey, type AiModel, type AiSettings } from '../../shared/ai';
+import { AI_MODELS, getAiSettings, requestImageAccess, saveAiSettings, testAiKey, type AiModel, type AiSettings } from '../../shared/ai';
 import { format, messages } from '../../shared/i18n';
-import { adAnalysisEstimate } from '../lib/aiFeatures';
+import { adAnalysisEstimate, adImageUrls } from '../lib/aiFeatures';
 import { openAiTool, runAdAnalysis, runNlColumns, runSynthesis, runWinningScore, stopAiTask } from '../lib/aiController';
 import { downloadBlob, fileBaseName } from '../lib/export';
 import { jobActive, setState, showToast, useStore } from '../store/useStore';
@@ -111,7 +111,8 @@ function AiSettingsModal() {
   const hadKey = s.apiKey.length > 0;
   return (
     <Modal title={A.settingsTitle} onClose={close}>
-      <p className="mb-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{A.settingsText}</p>
+      <p className="mb-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{A.settingsText}</p>
+      <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">{A.privacy}</p>
       <label className="mb-1 block text-sm font-medium" htmlFor="ai-key">
         {A.keyLabel}
       </label>
@@ -187,23 +188,24 @@ function AiConfirmModal() {
   }, []);
   if (!result || !model) return null;
   const est = adAnalysisEstimate(result, model);
-  const modelName = A.models[model].split(' — ')[0];
   return (
     <Modal title={A.confirmTitle} onClose={close}>
       <p className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
-        {format(A.confirmText, {
-          count: result.rows.length,
-          model: modelName,
-          requests: est.requests,
-          cost: est.cost.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-        })}
+        {format(A.confirmText, { count: result.rows.length, requests: est.requests, minutes: est.minutes })}
       </p>
-      {est.images > 0 && <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{A.confirmImages}</p>}
+      {est.images > 0 && <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{format(A.confirmImages, { domains: est.domains.join(', ') })}</p>}
       <div className="mt-5 flex justify-end gap-2">
         <Button variant="ghost" onClick={close}>
           {A.cancel}
         </Button>
-        <Button variant="primary" icon={<IconSparkles />} onClick={() => void runAdAnalysis()}>
+        <Button
+          variant="primary"
+          icon={<IconSparkles />}
+          onClick={() => {
+            // La demande d'accès aux images doit partir directement du clic.
+            void requestImageAccess(adImageUrls(result)).finally(() => void runAdAnalysis());
+          }}
+        >
           {A.run}
         </Button>
       </div>
