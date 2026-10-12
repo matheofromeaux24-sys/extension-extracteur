@@ -1,8 +1,8 @@
 // Extraction des lignes d'une liste détectée.
 
-import type { Column, Row } from '../shared/types';
+import { RAW_KEY, type Column, type Row } from '../shared/types';
 import { buildColumns } from './detect/columns';
-import { extractItemFields, extractRowFields, tableHeaders, type Field } from './detect/fields';
+import { extractItemFields, extractRowFields, fullText, tableHeaders, type Field } from './detect/fields';
 import type { Candidate } from './detect/listDetector';
 
 function baseUrl(el: Element): string {
@@ -15,12 +15,22 @@ export function itemFields(c: Pick<Candidate, 'isTable'>, items: Element[]): Fie
   );
 }
 
+/** Ajoute à chaque ligne le texte brut de son item. */
+export function withRawText(rows: Row[], items: Element[]): Row[] {
+  rows.forEach((r, i) => {
+    if (items[i]) r[RAW_KEY] = fullText(items[i]).slice(0, 1500);
+  });
+  return rows;
+}
+
 export function extractCandidate(c: Candidate): { columns: Column[]; rows: Row[] } {
   const fields = itemFields(c, c.items);
+  let out: { columns: Column[]; rows: Row[] };
   if (c.isTable) {
     const table = c.items[0].closest('table');
     const headers = table ? tableHeaders(table).headers : [];
-    return buildColumns(fields, { isTable: true, headers });
-  }
-  return buildColumns(fields);
+    out = buildColumns(fields, { isTable: true, headers });
+  } else out = buildColumns(fields);
+  withRawText(out.rows, c.items);
+  return out;
 }

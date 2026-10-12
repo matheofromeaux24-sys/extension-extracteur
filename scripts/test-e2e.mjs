@@ -332,6 +332,118 @@ async function openUiFor(env, url) {
     await t.close();
   }
 
+  // Fonctions IA : l'API Anthropic est simulée (aucun appel réel, aucune clé réelle).
+  {
+    const calls = [];
+    const sse = (text) => {
+      const ev = (type, data) => `event: ${type}\ndata: ${JSON.stringify({ type, ...data })}\n\n`;
+      const msg = { id: 'msg_test', type: 'message', role: 'assistant', model: 'claude-opus-5-5', content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 1 } };
+      return (
+        ev('message_start', { message: msg }) +
+        ev('content_block_start', { index: 0, content_block: { type: 'text', text: '' } }) +
+        text.match(/[\s\S]{1,40}/g).map((t) => ev('content_block_delta', { index: 0, delta: { type: 'text_delta', text: t } })).join('') +
+        ev('content_block_stop', { index: 0 }) +
+        ev('message_delta', { delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: 50 } }) +
+        ev('message_stop', {})
+      );
+    };
+    const reply = (text) => ({ id: 'msg_test', type: 'message', role: 'assistant', model: 'claude-opus-5-5', content: [{ type: 'text', text }], stop_reason: 'end_turn', stop_sequence: null, usage: { input_tokens: 10, output_tokens: 10 } });
+    const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, OPTIONS' };
+    await env.context.route('https://api.anthropic.com/**', async (route) => {
+      const req = route.request();
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+      const body = JSON.parse(req.postData() || '{}');
+      const key = req.headers()['x-api-key'];
+      const content = body.messages?.[0]?.content;
+      const texts = Array.isArray(content) ? content.filter((b) => b.type === 'text').map((b) => b.text).join('\n') : String(content);
+      calls.push({ system: body.system || '', images: Array.isArray(content) ? content.filter((b) => b.type === 'image').length : 0, model: body.model, fallbacks: body.fallbacks, format: body.output_config?.format?.type, stream: !!body.stream });
+      if (key !== 'sk-ant-test') return route.fulfill({ status: 401, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } }) });
+      const json = (obj) => route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify(reply(JSON.stringify(obj))) });
+      if (body.stream) return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'text/event-stream' }, body: sse('## Résumé\nFlytex mise à **40 %** sur la vidéo.\n\n## Recommandations\n- Tester des carrousels\n- Mettre en avant la garantie') });
+      if ((body.system || '').includes('analyste en marketing')) {
+        const n = (texts.match(/--- Élément \d+ ---/g) || []).length;
+        return json({ items: Array.from({ length: n }, (_, k) => ({ index: k, angle: 'Qualité / performance', accroche: `Accroche ${k}`, offre: k % 2 ? '-20 %' : 'Aucune', cible: 'Voyageurs', ton: 'Inspirant', texte_visuel: 'GARANTIE 10 ANS', description_visuel: 'Une valise' })) });
+      }
+      if ((body.system || '').includes('aides un utilisateur')) return json({ columns: [{ name: 'Promesse', instruction: 'La promesse en 5 mots' }] });
+      if ((body.system || '').includes('Tu remplis')) {
+        const n = (texts.match(/--- Ligne \d+ ---/g) || []).length;
+        return json({ rows: Array.from({ length: n }, (_, k) => ({ index: k, c0: `Promesse ${k}` })) });
+      }
+      return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify(reply('OK')) });
+    });
+
+    const { target: t, ui: u } = await openUiFor(env, `${base}/meta-ad-library.html`);
+    await u.getByText(/Liste 1 sur \d+/).waitFor({ timeout: 15000 });
+    const names = () => u.evaluate(() => Array.from(document.querySelectorAll('[data-column-name]')).map((e) => e.textContent));
+
+    // Sans clé : les réglages s'ouvrent. Mauvaise clé, puis bonne clé.
+    await u.getByRole('button', { name: 'Analyse IA' }).click();
+    await u.getByLabel('Clé d’API Anthropic').fill('sk-mauvaise');
+    await u.getByRole('button', { name: 'Tester la clé' }).click();
+    const badKey = await u.getByText(/Clé d’API refusée/).waitFor({ timeout: 8000 }).then(() => true, () => false);
+    await u.getByLabel('Clé d’API Anthropic').fill('sk-ant-test');
+    await u.getByRole('button', { name: 'Tester la clé' }).click();
+    const goodKey = await u.getByText('La clé fonctionne.').waitFor({ timeout: 8000 }).then(() => true, () => false);
+    await u.getByRole('button', { name: 'Enregistrer' }).click();
+    check(badKey && goodKey, 'Réglages IA : clé refusée puis acceptée (API simulée)');
+    if (shots) await u.screenshot({ path: path.join(shotDir, 'ui-outils-ia.png') });
+
+    // Analyse IA des pubs.
+    await u.getByRole('button', { name: 'Analyse IA' }).click();
+    const estimate = await u.getByText(/Coût estimé : environ/).textContent().catch(() => '');
+    if (shots) await u.screenshot({ path: path.join(shotDir, 'ui-ia-confirmation.png') });
+    await u.getByRole('button', { name: 'Lancer' }).click();
+    await u.locator('[role=status]', { hasText: 'Analyse IA terminée' }).waitFor({ timeout: 20000 }).catch(() => undefined);
+    const after = await names();
+    const adCalls = calls.filter((c) => c.system.includes('analyste en marketing'));
+    check(
+      after.includes('Angle (IA)') && after.includes('Texte du visuel (IA)') && adCalls.length === 2 && adCalls.some((c) => c.images > 0) && adCalls.every((c) => c.format === 'json_schema' && c.fallbacks === 'default' && c.model === 'claude-opus-5-5'),
+      'Analyse IA des pubs (texte + visuels, JSON structuré, repli serveur)',
+      `${adCalls.length} requêtes, ${adCalls.reduce((s, c) => s + c.images, 0)} visuels envoyés · ${estimate?.match(/environ [\d,]+ \$/)?.[0] ?? ''}`,
+    );
+    if (shots) await u.screenshot({ path: path.join(shotDir, 'ui-ia-analyse.png') });
+
+    // Colonnes IA en langage naturel.
+    await u.getByRole('button', { name: 'Colonnes IA' }).click();
+    await u.getByRole('textbox', { name: 'Colonnes IA en langage naturel' }).fill('La promesse principale de la pub en 5 mots');
+    await u.getByRole('button', { name: 'Lancer' }).click();
+    await u
+      .waitForFunction(() => Array.from(document.querySelectorAll('[data-column-name]')).some((e) => e.textContent === 'Promesse'), null, { timeout: 20000 })
+      .catch(() => undefined);
+    const nlNames = await names();
+    const promesse = await u.evaluate(() => document.body.innerText.includes('Promesse 0'));
+    check(nlNames.includes('Promesse') && promesse, 'Colonnes IA en langage naturel');
+
+    // Score pub gagnante (local).
+    await u.getByRole('button', { name: 'Score pub gagnante' }).click();
+    const scoreNames = await names();
+    const scores = await u.evaluate(() => {
+      const header = Array.from(document.querySelectorAll('[data-column-name]')).map((e) => e.textContent);
+      const idx = header.indexOf('Score pub gagnante');
+      return Array.from(document.querySelectorAll('div.absolute.left-0.flex')).map((row) => Number(row.children[idx + 1]?.textContent));
+    });
+    check(scoreNames[0] === 'Score pub gagnante' && scores.length > 3 && scores.every((v, i) => i === 0 || v <= scores[i - 1]), 'Score pub gagnante : colonne ajoutée et pubs classées', scores.slice(0, 10).join(', '));
+    if (shots) await u.screenshot({ path: path.join(shotDir, 'ui-score.png') });
+
+    // Synthèse stratégique (streaming).
+    await u.getByRole('button', { name: 'Synthèse' }).click();
+    const synth = await u.getByRole('dialog').getByText('Recommandations').waitFor({ timeout: 15000 }).then(() => true, () => false);
+    const streamed = calls.some((c) => c.stream);
+    if (shots) await u.screenshot({ path: path.join(shotDir, 'ui-synthese.png') });
+    check(synth && streamed, 'Synthèse stratégique (streaming, rendu Markdown)');
+    await u.keyboard.press('Escape');
+
+    // L'export ne contient jamais le texte brut interne.
+    await u.getByRole('button', { name: /Télécharger/ }).click();
+    const [dl] = await Promise.all([u.waitForEvent('download'), u.getByRole('menuitem', { name: /xlsx/i }).click()]);
+    const book = XLSX.read(readFileSync(await dl.path()));
+    const header = XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]], { header: 1 })[0];
+    check(header.includes('Angle (IA)') && header.includes('Score pub gagnante') && !header.includes('__raw'), 'Export avec les colonnes IA et le score', header.slice(0, 5).join(' | '));
+    await env.context.unroute('https://api.anthropic.com/**');
+    await u.close();
+    await t.close();
+  }
+
   // Page interdite, avec des résultats déjà affichés : bandeau explicatif.
   await target.goto('chrome://version');
   await ui.getByText(/Chrome interdit d’analyser cette page/).waitFor({ timeout: 5000 }).then(

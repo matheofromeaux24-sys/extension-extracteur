@@ -1,6 +1,6 @@
 import { messages } from '../../shared/i18n';
 import { setState, useStore, type Mode } from '../store/useStore';
-import { IconHelp, Logo } from './ui/Icons';
+import { IconHelp, IconSettings, Logo } from './ui/Icons';
 
 const MODES: Mode[] = ['list', 'details'];
 
@@ -31,6 +31,14 @@ export function Header() {
         ))}
       </div>
 
+      <button
+        onClick={() => setState({ modal: 'aiSettings' })}
+        title={messages.tools.settings}
+        aria-label={messages.tools.settings}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+      >
+        <IconSettings />
+      </button>
       <button
         onClick={() => setState({ helpOpen: true })}
         className="inline-flex h-8 items-center gap-1.5 rounded-xl px-2.5 text-[13px] font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"

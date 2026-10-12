@@ -1,3 +1,4 @@
+import { AiModals, ToolsBar } from './components/AiTools';
 import { ExportBar } from './components/ExportBar';
 import { Header } from './components/Header';
 import { HelpModal } from './components/HelpModal';
@@ -32,6 +33,7 @@ function ListMode() {
         <>
           <ListNavigator />
           <PaginationPanel />
+          <ToolsBar />
           <div className="mx-4 mb-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-neutral-200 shadow-soft dark:border-neutral-800">
             <DataTable columns={result.columns} rows={result.rows} />
           </div>
@@ -76,6 +78,7 @@ export function App() {
       <main className="flex min-h-0 flex-1 flex-col">{mode === 'list' ? <ListMode /> : <DetailsSoon />}</main>
       {mode === 'list' && <ExportBar />}
       <HelpModal />
+      <AiModals />
       <Toast />
     </div>
   );

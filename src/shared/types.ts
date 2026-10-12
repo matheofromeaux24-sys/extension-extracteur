@@ -30,6 +30,9 @@ export type Derive = 'rating' | 'count';
 
 export type Row = Record<string, string>;
 
+/** Clé réservée d'une ligne : texte brut complet de l'élément (contexte pour l'IA, jamais affiché ni exporté). */
+export const RAW_KEY = '__raw';
+
 export interface PageInfo {
   url: string;
   title: string;

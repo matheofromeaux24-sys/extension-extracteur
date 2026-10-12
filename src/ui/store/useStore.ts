@@ -57,6 +57,10 @@ export interface State {
   job: JobState | null;
   /** Sélection par clic en cours dans la page. */
   picking: 'list' | 'column' | null;
+  /** Fenêtre modale ouverte. */
+  modal: 'aiSettings' | 'aiConfirm' | 'nl' | 'synthesis' | null;
+  /** Traitement IA en cours (barre de progression + Arrêter). */
+  aiTask: { label: string; done: number; total: number } | null;
 }
 
 export function jobActive(job: JobState | null): boolean {
@@ -89,6 +93,8 @@ export const useStore = create<State>(() => ({
   },
   job: null,
   picking: null,
+  modal: null,
+  aiTask: null,
 }));
 
 export function setPagination(patch: Partial<PaginationSettings>): void {

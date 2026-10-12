@@ -6,7 +6,7 @@ import { domainOf } from '../shared/url';
 import { rowsForColumns } from './detect/columns';
 import { detectLists, type Candidate } from './detect/listDetector';
 import { waitForDomStable } from './domStable';
-import { extractCandidate, itemFields } from './extract';
+import { extractCandidate, itemFields, withRawText } from './extract';
 import { Highlighter } from './highlight';
 import { currentItems, fromCandidate, resolveList, type ActiveList } from './listResolver';
 import { clickLoadMore, clickNext, detectPagination, findNext, scrollStep } from './paginate';
@@ -94,7 +94,7 @@ async function handle(msg: ContentRequest): Promise<ContentResponses[ContentRequ
       await waitForDomStable({ quietMs: 400, timeoutMs: 6000 });
       const a = activeList(msg.list, msg.columns);
       const items = a ? currentItems(a) : [];
-      const rows = rowsForColumns(itemFields(msg.list, items), msg.columns);
+      const rows = withRawText(rowsForColumns(itemFields(msg.list, items), msg.columns), items);
       if (a) highlighter.show(items, a.container);
       return { rows, itemCount: items.length, page: pageInfo() };
     }

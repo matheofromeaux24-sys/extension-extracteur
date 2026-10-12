@@ -7,7 +7,7 @@ import { makeColumn, rowsForColumns } from './detect/columns';
 import { extractItemFields, extractRowFields, type Field } from './detect/fields';
 import { buildSelector, type Candidate } from './detect/listDetector';
 import { groupSimilarity, jaccard, normalizedClasses, pickSpread } from './detect/similarity';
-import { itemFields } from './extract';
+import { itemFields, withRawText } from './extract';
 import type { Highlighter } from './highlight';
 import { currentItems, type ActiveList } from './listResolver';
 import { PickerOverlay } from './picker';
@@ -187,7 +187,8 @@ export function pickColumn(active: ActiveList, columns: Column[], highlighter: H
 
     const finish = () => {
       overlay.destroy();
-      resolve({ columns: cols, rows: rowsForColumns(itemFields(def, currentItems(active)), cols), added });
+      const now = currentItems(active);
+      resolve({ columns: cols, rows: withRawText(rowsForColumns(itemFields(def, now), cols), now), added });
     };
     const buttons = () => [
       ...(added ? [{ label: M.done, primary: true, onClick: finish }] : []),
