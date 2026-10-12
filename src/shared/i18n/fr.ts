@@ -174,6 +174,7 @@ const fr = {
     test: 'Tester la clé',
     testing: 'Test en cours…',
     testOk: 'La clé fonctionne.',
+    modelSwitched: 'Modèle utilisé : {model}.',
     save: 'Enregistrer',
     saved: 'Réglages enregistrés',
     remove: 'Supprimer la clé',

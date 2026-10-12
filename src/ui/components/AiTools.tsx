@@ -136,6 +136,7 @@ function AiSettingsModal() {
             {A.models[m.id]}
           </option>
         ))}
+        {!AI_MODELS.some((m) => m.id === s.model) && <option value={s.model}>{s.model}</option>}
       </select>
       {testMsg && <p className={`mt-3 text-sm ${testMsg.ok ? 'text-brand-600' : 'text-red-600 dark:text-red-400'}`}>{testMsg.text}</p>}
       <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -145,8 +146,9 @@ function AiSettingsModal() {
             setTesting(true);
             setTestMsg(null);
             try {
-              await testAiKey(s);
-              setTestMsg({ ok: true, text: A.testOk });
+              const used = await testAiKey(s);
+              if (used !== s.model) setS({ ...s, model: used });
+              setTestMsg({ ok: true, text: used !== s.model ? `${A.testOk} ${format(A.modelSwitched, { model: used })}` : A.testOk });
             } catch (e) {
               setTestMsg({ ok: false, text: e instanceof Error ? e.message : String(e) });
             } finally {

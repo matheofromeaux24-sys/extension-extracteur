@@ -343,6 +343,20 @@ async function openUiFor(env, url) {
     await env.context.route('https://generativelanguage.googleapis.com/**', async (route) => {
       const req = route.request();
       if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+      // Liste des modèles : l'alias « gemini-flash-latest » est volontairement inconnu ici,
+      // l'extension doit basculer seule sur le meilleur Flash disponible.
+      if (req.method() === 'GET' && req.url().includes('/models?')) {
+        return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ models: [
+          { name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent'] },
+          { name: 'models/gemini-3-flash', supportedGenerationMethods: ['generateContent', 'countTokens'] },
+          { name: 'models/gemini-3-flash-lite', supportedGenerationMethods: ['generateContent'] },
+          { name: 'models/gemini-3-flash-image', supportedGenerationMethods: ['generateContent'] },
+          { name: 'models/text-embedding-004', supportedGenerationMethods: ['embedContent'] },
+        ] }) });
+      }
+      if (req.url().includes('/models/gemini-flash-latest:')) {
+        return route.fulfill({ status: 404, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ error: { code: 404, message: 'models/gemini-flash-latest is not found', status: 'NOT_FOUND' } }) });
+      }
       const body = JSON.parse(req.postData() || '{}');
       const key = req.headers()['x-goog-api-key'];
       const parts = body.contents?.[0]?.parts ?? [];
@@ -366,7 +380,8 @@ async function openUiFor(env, url) {
         const n = (texts.match(/--- Ligne \d+ ---/g) || []).length;
         return json({ rows: Array.from({ length: n }, (_, k) => ({ index: k, c0: `Promesse ${k}` })) });
       }
-      return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify(candidate('OK')) });
+      // Test de la clé : réponse vide, le modèle a utilisé toute la marge pour « réfléchir ».
+      return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ candidates: [{ content: { role: 'model', parts: [] }, finishReason: 'MAX_TOKENS' }] }) });
     });
 
     const { target: t, ui: u } = await openUiFor(env, `${base}/meta-ad-library.html`);
@@ -380,9 +395,9 @@ async function openUiFor(env, url) {
     const badKey = await u.getByText(/Clé d’API refusée/).waitFor({ timeout: 8000 }).then(() => true, () => false);
     await u.getByLabel('Clé d’API Google Gemini').fill('AIza-test');
     await u.getByRole('button', { name: 'Tester la clé' }).click();
-    const goodKey = await u.getByText('La clé fonctionne.').waitFor({ timeout: 8000 }).then(() => true, () => false);
+    const goodKey = await u.getByText(/La clé fonctionne\. Modèle utilisé : gemini-3-flash\./).waitFor({ timeout: 8000 }).then(() => true, () => false);
     await u.getByRole('button', { name: 'Enregistrer' }).click();
-    check(badKey && goodKey, 'Réglages IA : clé Gemini refusée puis acceptée (API simulée)');
+    check(badKey && goodKey, 'Réglages IA : clé refusée, puis acceptée malgré une réponse vide et un alias inconnu (bascule sur gemini-3-flash)');
     if (shots) await u.screenshot({ path: path.join(shotDir, 'ui-outils-ia.png') });
 
     // Analyse IA des pubs.
@@ -394,7 +409,7 @@ async function openUiFor(env, url) {
     const after = await names();
     const adCalls = calls.filter((c) => c.system.includes('analyste en marketing'));
     check(
-      after.includes('Angle (IA)') && after.includes('Texte du visuel (IA)') && adCalls.length === 1 && adCalls[0].images === 9 && adCalls.every((c) => c.mime === 'application/json' && c.schemaType === 'OBJECT' && c.url.includes('/models/gemini-flash-latest:generateContent')),
+      after.includes('Angle (IA)') && after.includes('Texte du visuel (IA)') && adCalls.length === 1 && adCalls[0].images === 9 && adCalls.every((c) => c.mime === 'application/json' && c.schemaType === 'OBJECT' && c.url.includes('/models/gemini-3-flash:generateContent')),
       'Analyse IA des pubs avec Gemini (texte + visuels, JSON structuré)',
       `${adCalls.length} requête, ${adCalls.reduce((s, c) => s + c.images, 0)} visuels envoyés · « ${estimate?.slice(0, 90)}… »`,
     );

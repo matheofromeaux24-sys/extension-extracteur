@@ -22,7 +22,9 @@ export default defineManifest({
   },
   background: { service_worker: 'src/background/index.ts', type: 'module' },
   permissions: ['activeTab', 'scripting', 'storage', 'tabs', 'sidePanel'],
-  // Demandées domaine par domaine, au premier usage (bouton « Autoriser »).
+  // API Gemini (fonctions IA) : accès explicite, pour ne dépendre d'aucune règle CORS.
+  host_permissions: ['https://generativelanguage.googleapis.com/*'],
+  // Sites analysés : demandés domaine par domaine, au premier usage (bouton « Autoriser »).
   optional_host_permissions: ['<all_urls>'],
   commands: {
     _execute_action: {

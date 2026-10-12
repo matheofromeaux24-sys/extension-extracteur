@@ -4,7 +4,8 @@
 
 import { messages } from './i18n';
 
-export type AiModel = 'gemini-flash-latest' | 'gemini-flash-lite-latest';
+/** Identifiant de modèle Gemini (alias « -latest » par défaut, ou modèle précis trouvé automatiquement). */
+export type AiModel = string;
 
 export interface AiSettings {
   apiKey: string;
@@ -12,7 +13,7 @@ export interface AiSettings {
 }
 
 /** Modèles de l'offre gratuite. Les alias « -latest » suivent automatiquement la dernière version. */
-export const AI_MODELS: Array<{ id: AiModel; rpm: number }> = [
+export const AI_MODELS: Array<{ id: 'gemini-flash-latest' | 'gemini-flash-lite-latest'; rpm: number }> = [
   { id: 'gemini-flash-latest', rpm: 10 },
   { id: 'gemini-flash-lite-latest', rpm: 15 },
 ];
@@ -24,8 +25,7 @@ const API = 'https://generativelanguage.googleapis.com/v1beta';
 export async function getAiSettings(): Promise<AiSettings> {
   const data = await chrome.storage.local.get(KEY);
   const saved = data[KEY] as Partial<AiSettings> | undefined;
-  const model = AI_MODELS.some((m) => m.id === saved?.model) ? (saved!.model as AiModel) : DEFAULTS.model;
-  return { ...DEFAULTS, ...saved, model };
+  return { ...DEFAULTS, ...saved, model: saved?.model || DEFAULTS.model };
 }
 
 export async function saveAiSettings(s: AiSettings): Promise<void> {
@@ -34,11 +34,21 @@ export async function saveAiSettings(s: AiSettings): Promise<void> {
 
 /** Durée estimée (minutes) pour un nombre de requêtes, au rythme de l'offre gratuite. */
 export function estimateMinutes(model: AiModel, requests: number): number {
-  const rpm = AI_MODELS.find((m) => m.id === model)?.rpm ?? 10;
-  return Math.max(1, Math.ceil(requests / (rpm * 0.9)));
+  return Math.max(1, Math.ceil(requests / (rpmOf(model) * 0.9)));
 }
 
-export class AiError extends Error {}
+function rpmOf(model: AiModel): number {
+  return /lite/.test(model) ? 15 : 10;
+}
+
+export class AiError extends Error {
+  constructor(
+    message: string,
+    public readonly code: 'model' | 'other' = 'other',
+  ) {
+    super(message);
+  }
+}
 
 export type Part = { type: 'text'; text: string } | { type: 'image'; url: string };
 
@@ -48,8 +58,7 @@ export type Part = { type: 'text'; text: string } | { type: 'image'; url: string
 let nextSlot = 0;
 
 async function waitForSlot(model: AiModel, signal?: AbortSignal): Promise<void> {
-  const rpm = AI_MODELS.find((m) => m.id === model)?.rpm ?? 10;
-  const interval = Math.ceil(60_000 / (rpm * 0.9));
+  const interval = Math.ceil(60_000 / (rpmOf(model) * 0.9));
   const now = Date.now();
   const at = Math.max(now, nextSlot);
   nextSlot = at + interval;
@@ -210,7 +219,7 @@ async function call(path: string, apiKey: string, payload: unknown, signal?: Abo
     }
     if (res.status === 400 && /API key|API_KEY/i.test(msg + status + JSON.stringify(body.error?.details ?? ''))) throw new AiError(E.badKey);
     if (res.status === 403) throw new AiError(E.permission);
-    if (res.status === 404) throw new AiError(E.model);
+    if (res.status === 404) throw new AiError(E.model, 'model');
     throw new AiError(`${E.api} (${res.status}) ${msg}`);
   }
 }
@@ -227,6 +236,40 @@ function textFromCandidate(body: Record<string, unknown>): string {
   const text = parts.map((p) => p.text ?? '').join('');
   if (reason === 'MAX_TOKENS' && !text) throw new AiError(E.truncated);
   return text;
+}
+
+/**
+ * Meilleur modèle Flash accessible avec cette clé (si l'alias n'est pas reconnu).
+ * Préfère les versions stables, puis la version la plus récente.
+ */
+export async function resolveModel(apiKey: string, lite: boolean): Promise<AiModel | null> {
+  try {
+    const res = await fetch(`${API}/models?pageSize=1000`, { headers: { 'x-goog-api-key': apiKey } });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { models?: Array<{ name: string; supportedGenerationMethods?: string[] }> };
+    const candidates = (body.models ?? [])
+      .filter((m) => m.supportedGenerationMethods?.includes('generateContent'))
+      .map((m) => m.name.replace(/^models\//, ''))
+      .filter((id) => /^gemini-[\d.]+-flash/.test(id) && lite === /lite/.test(id) && !/(image|tts|live|audio|thinking|exp)/.test(id));
+    const version = (id: string) => parseFloat(id.match(/^gemini-([\d.]+)/)?.[1] ?? '0');
+    candidates.sort((a, b) => Number(/preview/.test(a)) - Number(/preview/.test(b)) || version(b) - version(a));
+    return candidates[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Exécute `fn` ; si le modèle est inconnu, bascule sur le meilleur modèle disponible et réessaie. */
+async function withModel<T>(s: AiSettings, fn: (model: AiModel) => Promise<T>): Promise<T> {
+  try {
+    return await fn(s.model);
+  } catch (e) {
+    if (!(e instanceof AiError) || e.code !== 'model') throw e;
+    const found = await resolveModel(s.apiKey, /lite/.test(s.model));
+    if (!found || found === s.model) throw e;
+    await saveAiSettings({ ...s, model: found });
+    return fn(found);
+  }
 }
 
 async function settingsOrThrow(): Promise<AiSettings> {
@@ -248,8 +291,8 @@ export async function askJson<T>(req: JsonRequest): Promise<T> {
   const s = await settingsOrThrow();
   const contents = [{ role: 'user', parts: await toGeminiParts(req.parts, req.signal) }];
   await waitForSlot(s.model, req.signal);
-  const res = await call(
-    `models/${s.model}:generateContent`,
+  const res = await withModel(s, (model) => call(
+    `models/${model}:generateContent`,
     s.apiKey,
     {
       systemInstruction: { parts: [{ text: req.system }] },
@@ -262,7 +305,7 @@ export async function askJson<T>(req: JsonRequest): Promise<T> {
       },
     },
     req.signal,
-  );
+  ));
   const text = textFromCandidate((await res.json()) as Record<string, unknown>);
   try {
     return JSON.parse(text) as T;
@@ -276,11 +319,13 @@ export async function askText(req: { system: string; parts: Part[]; onText?: (fu
   const s = await settingsOrThrow();
   const contents = [{ role: 'user', parts: await toGeminiParts(req.parts, req.signal) }];
   await waitForSlot(s.model, req.signal);
-  const res = await call(
-    `models/${s.model}:streamGenerateContent?alt=sse`,
-    s.apiKey,
-    { systemInstruction: { parts: [{ text: req.system }] }, contents, generationConfig: { maxOutputTokens: 32000, temperature: 0.4 } },
-    req.signal,
+  const res = await withModel(s, (model) =>
+    call(
+      `models/${model}:streamGenerateContent?alt=sse`,
+      s.apiKey,
+      { systemInstruction: { parts: [{ text: req.system }] }, contents, generationConfig: { maxOutputTokens: 32000, temperature: 0.4 } },
+      req.signal,
+    ),
   );
   const reader = res.body!.getReader();
   const decoder = new TextDecoder();
@@ -305,13 +350,22 @@ export async function askText(req: { system: string; parts: Part[]; onText?: (fu
   return full;
 }
 
-/** Vérifie la clé avec une très petite requête. */
-export async function testAiKey(settings: AiSettings): Promise<void> {
-  const res = await call(`models/${settings.model}:generateContent`, settings.apiKey, {
-    contents: [{ role: 'user', parts: [{ text: 'Réponds simplement : OK' }] }],
-    generationConfig: { maxOutputTokens: 256 },
+/**
+ * Vérifie la clé avec une très petite requête. Une réponse acceptée par Google
+ * suffit : le contenu importe peu (les modèles « qui réfléchissent » peuvent
+ * consommer toute la petite marge de réponse sans écrire de texte).
+ * Renvoie le modèle effectivement utilisé (il peut avoir été remplacé).
+ */
+export async function testAiKey(settings: AiSettings): Promise<AiModel> {
+  let used = settings.model;
+  await withModel(settings, (model) => {
+    used = model;
+    return call(`models/${model}:generateContent`, settings.apiKey, {
+      contents: [{ role: 'user', parts: [{ text: 'Réponds simplement : OK' }] }],
+      generationConfig: { maxOutputTokens: 2048 },
+    });
   });
-  textFromCandidate((await res.json()) as Record<string, unknown>);
+  return used;
 }
 
 /** Exécute des tâches avec une concurrence limitée. */
