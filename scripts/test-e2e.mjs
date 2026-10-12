@@ -223,11 +223,71 @@ async function openUiFor(env, url) {
     const { target: t, ui: u } = await openUiFor(env, `${base}/prestashop.html`);
     await u.getByText(/Liste 1 sur \d+/).waitFor({ timeout: 15000 });
     await u.waitForTimeout(400);
-    await u.getByRole('button', { name: 'Changer' }).click();
+    await u.getByRole('button', { name: 'Sélectionner un autre bouton' }).click();
     await t.waitForTimeout(500);
     await t.locator('a.next').click();
     const chosen = await u.getByText(/Choisi :/).waitFor({ timeout: 5000 }).then(() => true, () => false);
     check(chosen && t.url().endsWith('/prestashop.html'), 'Choix du bouton par clic (sans déclencher le lien)', t.url());
+    await u.close();
+    await t.close();
+  }
+
+  // Sélection du bouton de pagination alors que le mode est sur « Aucune » : le mode se règle seul.
+  {
+    const { target: t, ui: u } = await openUiFor(env, `${base}/spa-pagination.html`);
+    await u.getByText(/Liste 1 sur \d+/).waitFor({ timeout: 15000 });
+    await u.waitForTimeout(400);
+    await u.locator('#pagination-mode').selectOption('none');
+    await u.getByRole('button', { name: 'Sélectionner le bouton sur la page' }).click();
+    await t.waitForTimeout(400);
+    await t.locator('.pager-next').click();
+    await u.getByText(/Choisi :/).waitFor({ timeout: 5000 }).catch(() => undefined);
+    const mode = await u.locator('#pagination-mode').inputValue();
+    const pageUnchanged = await t.locator('text=Page 1 / 3').count();
+    check(mode === 'next' && pageUnchanged === 1, 'Bouton choisi sur la page depuis « Aucune » → mode Page suivante', `mode « ${mode} »`);
+    await u.close();
+    await t.close();
+  }
+
+  // Sélecteur visuel : les avis ne sont pas la liste proposée, on les choisit en 2 clics.
+  {
+    const { target: t, ui: u } = await openUiFor(env, `${base}/fiche-avis.html`);
+    await u.getByText(/Liste 1 sur \d+/).waitFor({ timeout: 15000 });
+    const headerCount = () => u.evaluate(() => document.querySelectorAll('div.sticky.top-0 > div').length - 1);
+    await u.getByRole('button', { name: 'Modifier la liste' }).click();
+    await t.waitForTimeout(400);
+    await t.locator('.review-text').first().click(); // 1er clic : un avis
+    await t.locator('.review .author').nth(2).click(); // 2e clic : un autre avis
+    await t.keyboard.press('Enter'); // Valider
+    const listOk = await u.getByText('4 éléments').waitFor({ timeout: 5000 }).then(() => true, () => false);
+    const headers = await u.evaluate(() => Array.from(document.querySelectorAll('div.sticky.top-0 > div')).map((d) => d.textContent?.replace(/^[^A-Za-zÀ-ÿ]+/, '')));
+    check(listOk && headers.includes('Auteur') && headers.includes('Note'), 'Modifier la liste : avis choisis par clic', headers.slice(1).join(' | '));
+    if (shots) await u.screenshot({ path: path.join(shotDir, 'ui-avis-selectionnes.png') });
+    if (shots) await t.screenshot({ path: path.join(shotDir, 'page-avis-surbrillance.png') });
+
+    const before = await headerCount();
+    await u.getByRole('button', { name: 'Ajouter une colonne' }).click();
+    await t.waitForTimeout(400);
+    await t.locator('.review .report').first().click();
+    await t.keyboard.press('Enter'); // Terminer
+    await u.waitForFunction((n) => document.querySelectorAll('div.sticky.top-0 > div').length - 1 > n, before, { timeout: 5000 }).catch(() => undefined);
+    const after = await headerCount();
+    const sample = await u.evaluate(() => document.body.innerText.includes('Signaler'));
+    check(after === before + 1 && sample, 'Ajouter une colonne par clic', `${before} → ${after} colonnes`);
+    await u.close();
+    await t.close();
+  }
+
+  // Une seule cliquée : la liste est déduite (1 clic suffit).
+  {
+    const { target: t, ui: u } = await openUiFor(env, `${base}/fiche-avis.html`);
+    await u.getByText(/Liste 1 sur \d+/).waitFor({ timeout: 15000 });
+    await u.getByRole('button', { name: 'Modifier la liste' }).click();
+    await t.waitForTimeout(400);
+    await t.locator('.review-title').nth(1).click();
+    await t.keyboard.press('Enter');
+    const ok = await u.getByText('4 éléments').waitFor({ timeout: 5000 }).then(() => true, () => false);
+    check(ok, 'Modifier la liste en 1 clic (liste déduite)');
     await u.close();
     await t.close();
   }

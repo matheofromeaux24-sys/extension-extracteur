@@ -31,6 +31,7 @@ const cases = [
   { file: 'shadow-iframe.html', items: 6, columns: ['Titre', 'Prix', 'Lien', 'Image'], pagination: none },
   { file: 'grand-volume.html', items: 10000, columns: ['Titre', 'Lien', 'Image', 'Téléphone', 'Email'], pagination: none },
   { file: 'fil-infini.html', items: 20, columns: ['Titre', 'Lien', 'Image', 'Date'], pagination: none },
+  { file: 'fiche-avis.html', items: 8, columns: ['Lien', 'Prix', 'Image'], pagination: none },
   { file: 'spa-pagination.html', items: 10, columns: ['Titre', 'Lien'], pagination: { ...none, next: 'Suivant ›' } },
 ];
 

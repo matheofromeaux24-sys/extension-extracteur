@@ -107,17 +107,21 @@ interface Ctx {
   parentHint: string;
 }
 
-/** Extrait tous les champs d'un item générique (carte, ligne de liste…). */
-export function extractItemFields(item: Element, base: string): Field[] {
+/**
+ * Extrait tous les champs d'un item générique (carte, ligne de liste…).
+ * `track`, si fourni, reçoit les champs produits par chaque élément (ajout de colonne par clic).
+ */
+export function extractItemFields(item: Element, base: string, track?: Map<Element, Field[]>): Field[] {
   const fields: Field[] = [];
   const occurrences = new Map<string, number>();
   let order = 0;
 
+  let current: Element = item;
   const add = (key: string, value: string, type: FieldType, ctx: Ctx, hint: string) => {
     if (!value) return;
     const n = occurrences.get(key) || 0;
     occurrences.set(key, n + 1);
-    fields.push({
+    const field: Field = {
       key: n ? `${key}[${n}]` : key,
       value,
       type,
@@ -126,11 +130,18 @@ export function extractItemFields(item: Element, base: string): Field[] {
       inLink: ctx.inLink,
       inHeading: ctx.inHeading,
       buttonLike: ctx.buttonLike,
-    });
+    };
+    fields.push(field);
+    if (track) {
+      const list = track.get(current);
+      if (list) list.push(field);
+      else track.set(current, [field]);
+    }
   };
 
   const visit = (el: Element, path: string, parent: Ctx) => {
     if (el !== item && (isSkippedTag(el) || !isRendered(el))) return;
+    current = el;
     const tag = el.tagName;
     const hint = hintOf(el);
     const ctx: Ctx = {

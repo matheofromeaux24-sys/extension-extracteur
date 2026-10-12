@@ -74,8 +74,10 @@ export type ContentRequest =
   | { type: 'clickLoadMore'; selector?: string; list: ListDef; waitMs: number }
   | { type: 'findNext'; selector?: string }
   | { type: 'clickNext'; selector?: string; list: ListDef; waitMs: number }
-  | { type: 'pickElement'; purpose: 'next' | 'loadMore' }
-  | { type: 'cancelPick' };
+  | { type: 'pickElement'; purpose: 'next' | 'loadMore' | 'any' }
+  | { type: 'cancelPick' }
+  | { type: 'pickList' }
+  | { type: 'pickColumn'; columns: Column[] };
 
 /** Élément de pagination trouvé sur la page. */
 export interface PageControl {
@@ -104,6 +106,8 @@ export interface ContentResponses {
   clickNext: { clicked: boolean; changed: boolean };
   pickElement: PageControl | null;
   cancelPick: true;
+  pickList: ExtractResult | null;
+  pickColumn: { columns: Column[]; rows: Row[]; added: Column | null } | null;
 }
 
 export type ContentResponse<T extends ContentRequest> = ContentResponses[T['type']];

@@ -209,24 +209,78 @@ export async function restoreRunningJob(): Promise<boolean> {
   return true;
 }
 
-/** Choix du bouton de pagination par clic sur la page. */
-export async function pickPaginationControl(): Promise<void> {
-  const { analyzed, pagination } = getState();
-  if (!analyzed || (pagination.mode !== 'next' && pagination.mode !== 'loadMore')) return;
-  setPagination({ picking: true });
+/** Met l'onglet analysé au premier plan le temps d'une sélection par clic, puis revient. */
+async function withPageFocus<T>(tabId: number, fn: () => Promise<T>): Promise<T | null> {
   const own = await chrome.windows.getCurrent();
   try {
-    const tab = await chrome.tabs.update(analyzed.tabId, { active: true });
+    const tab = await chrome.tabs.update(tabId, { active: true });
     if (tab?.windowId !== undefined) await chrome.windows.update(tab.windowId, { focused: true });
-    await ensureContentScript(analyzed.tabId);
-    const picked = await sendToTab(analyzed.tabId, { type: 'pickElement', purpose: pagination.mode });
-    if (picked) setPagination({ selector: picked.selector, selectorLabel: picked.label });
+    await ensureContentScript(tabId);
+    return await fn();
   } catch (e) {
     showToast(e instanceof Error ? e.message : String(e), 'error');
+    return null;
   } finally {
-    setPagination({ picking: false });
     if (own.id !== undefined) void chrome.windows.update(own.id, { focused: true });
   }
+}
+
+const LOAD_MORE_LABEL = /(charger|afficher|voir|montrer|load|show|see|view)\s.*(plus|more|davantage|suite)|^plus$/i;
+const NEXT_LABEL = /(suivante?s?|next|weiter|siguiente)|^[›»→>]+$|[›»→]\s*$/i;
+
+/** Choix du bouton de pagination par clic sur la page (règle aussi le mode si besoin). */
+export async function pickPaginationControl(): Promise<void> {
+  const { analyzed, pagination } = getState();
+  if (!analyzed) return;
+  const purpose = pagination.mode === 'next' || pagination.mode === 'loadMore' ? pagination.mode : 'any';
+  setPagination({ picking: true });
+  const picked = await withPageFocus(analyzed.tabId, () => sendToTab(analyzed.tabId, { type: 'pickElement', purpose }));
+  if (picked) {
+    // « Suivant » ou lien vers une autre adresse = page suivante ; sinon « Charger plus ».
+    const looksNext = NEXT_LABEL.test(picked.label) || (!!picked.href && !LOAD_MORE_LABEL.test(picked.label));
+    const mode: PaginationMode = purpose !== 'any' ? purpose : looksNext ? 'next' : 'loadMore';
+    setPagination({ selector: picked.selector, selectorLabel: picked.label, mode, modeTouched: true });
+  }
+  setPagination({ picking: false });
+}
+
+/** « Modifier la liste » : l'utilisateur clique sur un élément du bloc voulu dans la page. */
+export async function editList(): Promise<void> {
+  const { analyzed, target } = getState();
+  const tabId = analyzed?.tabId ?? target?.tabId;
+  if (tabId === undefined) return;
+  setState({ picking: 'list' });
+  const res = await withPageFocus(tabId, () => sendToTab(tabId, { type: 'pickList' }));
+  setState({ picking: null });
+  if (!res) return;
+  setState({
+    status: 'ready',
+    result: res,
+    pages: 1,
+    job: null,
+    analyzed: { tabId, url: res.page.url },
+    startedAt: Date.now() - res.durationMs,
+    endedAt: Date.now(),
+  });
+  void loadPaginationDetection(tabId);
+}
+
+/** « Ajouter une colonne » : clic sur une donnée dans un élément surligné. */
+export async function addColumn(): Promise<void> {
+  const { analyzed, result } = getState();
+  if (!analyzed || !result) return;
+  setState({ picking: 'column' });
+  const res = await withPageFocus(analyzed.tabId, () => sendToTab(analyzed.tabId, { type: 'pickColumn', columns: result.columns }));
+  setState({ picking: null });
+  if (!res?.added) return;
+  // Les lignes sont recalculées sur la page affichée : relancer la pagination pour les pages suivantes.
+  setState({ result: { ...result, columns: res.columns, rows: res.rows }, pages: 1, job: null });
+}
+
+export function cancelPageSelection(): void {
+  const { analyzed } = getState();
+  if (analyzed) sendToTab(analyzed.tabId, { type: 'cancelPick' }).catch(() => undefined);
+  setState({ picking: null });
 }
 
 export function cancelPicking(): void {

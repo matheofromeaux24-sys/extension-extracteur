@@ -204,7 +204,7 @@ function isTextual(t: FieldType): boolean {
 const B = '(?:^|[^a-z])';
 const HINTS: Array<[RegExp, ColumnLabel, ColumnKind[]?]> = [
   [new RegExp(`${B}(old|before|was|regular|barr|ancien|strike|crossed|list-?price|original|regular-price)`), 'oldPrice', ['price']],
-  [new RegExp(`${B}(reviews?|avis|ratings?-?count|nb-?avis|comments?-?count|évaluations?|evaluations?)`), 'reviews', ['number', 'text']],
+  [new RegExp(`${B}(reviews?|avis|ratings?-?count|nb-?avis|comments?-?count|évaluations?|evaluations?)`), 'reviews', ['number']],
   [new RegExp(`${B}(rating|stars?|etoiles?|note|score)`), 'rating'],
   [new RegExp(`${B}(author|auteur|byline|writer|posted-?by)`), 'author'],
   [new RegExp(`${B}(brand|marque|manufacturer|fabricant)`), 'brand'],
@@ -304,16 +304,20 @@ function nameColumns(cols: Agg[], opts: BuildOptions): Column[] {
     const kind = kinds[i];
     if (kind === 'link') return void (names[i] = L.link);
     if (kind === 'image') return void (names[i] = L.image);
-    const hint = a.hint;
-    for (const [re, label, allowed] of HINTS) {
-      if (re.test(hint) && (!allowed || allowed.includes(kind))) {
-        names[i] = L[label];
-        if (label === 'description') {
-          kinds[i] = 'description';
-          descriptionUsed = true;
+    // Les indices de l'élément lui-même priment sur ceux de son parent
+    // (« span.author » dans « div.review-head » = Auteur, pas Avis).
+    const [own, parent = ''] = a.hint.split(' | ');
+    for (const hint of [own, parent]) {
+      for (const [re, label, allowed] of HINTS) {
+        if (re.test(hint) && (!allowed || allowed.includes(kind))) {
+          names[i] = L[label];
+          if (label === 'description') {
+            kinds[i] = 'description';
+            descriptionUsed = true;
+          }
+          if (label === 'rating') kinds[i] = 'rating';
+          return;
         }
-        if (label === 'rating') kinds[i] = 'rating';
-        return;
       }
     }
     const byKind = KIND_LABEL[kind];
@@ -349,4 +353,28 @@ function nameColumns(cols: Agg[], opts: BuildOptions): Column[] {
     if (a.derive) col.derive = a.derive;
     return col;
   });
+}
+
+/** Crée une colonne pour un champ choisi par clic, nommée et unique parmi `existing`. */
+export function makeColumn(perItem: Field[][], key: string, existing: Column[]): Column {
+  const matches = perItem.map((fields) => fields.find((f) => f.key === key));
+  const sample = matches.find(Boolean);
+  const agg: Agg = {
+    key,
+    type: sample?.type ?? 'text',
+    values: matches.map((f) => f?.value ?? ''),
+    count: matches.filter(Boolean).length,
+    orderSum: 0,
+    hint: sample?.hint ?? '',
+    inLink: matches.filter((f) => f?.inLink).length,
+    inHeading: matches.filter((f) => f?.inHeading).length,
+    buttonLike: 0,
+  };
+  const [named] = nameColumns([agg], {});
+  const names = new Set(existing.map((c) => c.name));
+  let name = named.name;
+  for (let k = 2; names.has(name); k++) name = `${named.name} ${k}`;
+  let i = existing.length;
+  while (existing.some((c) => c.id === `c${i}`)) i++;
+  return { ...named, id: `c${i}`, name };
 }

@@ -103,6 +103,12 @@ export const IconX = (p: P) => (
     <path d="m6 6 12 12" />
   </Base>
 );
+export const IconPlus = (p: P) => (
+  <Base {...p}>
+    <path d="M12 5v14" />
+    <path d="M5 12h14" />
+  </Base>
+);
 export const IconCheck = (p: P) => (
   <Base {...p}>
     <path d="m5 12 5 5L20 7" />

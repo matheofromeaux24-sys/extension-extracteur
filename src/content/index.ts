@@ -10,6 +10,7 @@ import { extractCandidate, itemFields } from './extract';
 import { Highlighter } from './highlight';
 import { currentItems, fromCandidate, resolveList, type ActiveList } from './listResolver';
 import { clickLoadMore, clickNext, detectPagination, findNext, scrollStep } from './paginate';
+import { pickColumn, pickList } from './listPicker';
 import { cancelPick, pickElement } from './picker';
 
 const VERSION = chrome.runtime.getManifest().version;
@@ -105,8 +106,27 @@ async function handle(msg: ContentRequest): Promise<ContentResponses[ContentRequ
       return findNext(msg.selector);
     case 'clickNext':
       return clickNext(msg.selector, itemsOf(msg.list), msg.waitMs);
-    case 'pickElement':
-      return pickElement(msg.purpose === 'next' ? messages.pagination.pickNextBanner : messages.pagination.pickLoadMoreBanner);
+    case 'pickElement': {
+      const P = messages.pagination;
+      const banner = msg.purpose === 'next' ? P.pickNextBanner : msg.purpose === 'loadMore' ? P.pickLoadMoreBanner : P.pickAnyBanner;
+      return pickElement(banner, messages.picker.cancel);
+    }
+    case 'pickList': {
+      const t0 = performance.now();
+      const previous = state.candidates[state.current];
+      const picked = await pickList(highlighter, () => {
+        if (previous?.items.some((e) => e.isConnected)) highlighter.show(previous.items, previous.container);
+      });
+      if (!picked) return null;
+      // La liste choisie passe en tête : « Liste 1 sur N ».
+      state.candidates = [picked, ...state.candidates.filter((c) => c.selector !== picked.selector)];
+      return select(0, t0);
+    }
+    case 'pickColumn': {
+      const a = state.active;
+      if (!a) return null;
+      return pickColumn(a, msg.columns, highlighter);
+    }
     case 'cancelPick':
       cancelPick();
       return true;

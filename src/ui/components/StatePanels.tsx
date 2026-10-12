@@ -3,10 +3,10 @@
 import type { ReactNode } from 'react';
 import { format, messages } from '../../shared/i18n';
 import { forbiddenReason } from '../../shared/messaging';
-import { analyze, reanalyzeCurrent, requestPermission } from '../lib/controller';
+import { analyze, editList, reanalyzeCurrent, requestPermission } from '../lib/controller';
 import { jobActive, useStore } from '../store/useStore';
 import { Button } from './ui/Button';
-import { IconAlert, IconLock, IconRefresh, IconSearch } from './ui/Icons';
+import { IconAlert, IconLock, IconPencil, IconRefresh, IconSearch } from './ui/Icons';
 
 function Panel({ icon, tone = 'neutral', title, children }: { icon: ReactNode; tone?: 'neutral' | 'warn'; title: string; children?: ReactNode }) {
   return (
@@ -57,9 +57,14 @@ export function EmptyState() {
   return (
     <Panel icon={<IconSearch width={22} height={22} />} title={messages.errors.noListTitle}>
       <Text>{messages.errors.noListText}</Text>
-      <Button className="mt-5" icon={<IconRefresh />} onClick={reanalyzeCurrent}>
-        {messages.page.reanalyze}
-      </Button>
+      <div className="mt-5 flex gap-2">
+        <Button variant="primary" icon={<IconPencil />} onClick={() => void editList()}>
+          {messages.list.selectOnPage}
+        </Button>
+        <Button icon={<IconRefresh />} onClick={reanalyzeCurrent}>
+          {messages.page.reanalyze}
+        </Button>
+      </div>
     </Panel>
   );
 }

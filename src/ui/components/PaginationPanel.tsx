@@ -58,7 +58,6 @@ function NumberField({
 function ControlInfo() {
   const p = useStore((s) => s.pagination);
   const P = messages.pagination;
-  if (p.mode === 'none') return null;
   if (p.mode === 'scroll') {
     return <span className="text-neutral-500 dark:text-neutral-400">{p.detection?.scroll.inner ? P.scrollInner : P.scrollPage}</span>;
   }
@@ -73,25 +72,21 @@ function ControlInfo() {
       </span>
     );
   }
-  const detected = p.mode === 'next' ? p.detection?.next : p.detection?.loadMore;
-  const label = p.selectorLabel ?? detected?.label;
+  const detected = p.mode === 'next' ? p.detection?.next : p.mode === 'loadMore' ? p.detection?.loadMore : null;
+  const label = p.mode === 'none' ? undefined : (p.selectorLabel ?? detected?.label);
   return (
-    <span className="flex min-w-0 items-center gap-2">
-      {label ? (
-        <span className="min-w-0 truncate text-neutral-600 dark:text-neutral-300">
-          {p.selectorLabel ? P.chosen : P.detected}{' '}
-          <span className="font-medium text-neutral-900 dark:text-neutral-100">« {label} »</span>
-        </span>
-      ) : (
-        <span className="text-amber-600 dark:text-amber-400">{P.notDetected}</span>
-      )}
-      <button
-        onClick={() => void pickPaginationControl()}
-        className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50 dark:text-brand-500 dark:hover:bg-brand-500/10"
-      >
-        <IconSearch width={13} height={13} />
+    <span className="flex min-w-0 flex-wrap items-center gap-2">
+      {p.mode !== 'none' &&
+        (label ? (
+          <span className="min-w-0 truncate text-neutral-600 dark:text-neutral-300">
+            {p.selectorLabel ? P.chosen : P.detected} <span className="font-medium text-neutral-900 dark:text-neutral-100">« {label} »</span>
+          </span>
+        ) : (
+          <span className="text-amber-600 dark:text-amber-400">{P.notDetected}</span>
+        ))}
+      <Button size="sm" variant="secondary" icon={<IconSearch width={14} height={14} />} title={P.pickHint} onClick={() => void pickPaginationControl()}>
         {label ? P.pickAgain : P.pick}
-      </button>
+      </Button>
     </span>
   );
 }

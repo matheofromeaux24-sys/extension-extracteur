@@ -4,7 +4,7 @@ Extension Chrome (Manifest V3) de web scraping **sans code** : ouvrez une page, 
 
 Tout fonctionne en local dans le navigateur : aucune donnée n'est envoyée à un serveur.
 
-> **État d'avancement** : étapes (a) et (c) livrées : fenêtre, détection automatique, tableau, export CSV / XLSX / copie, **pagination multi-pages**. Les étapes suivantes (sélecteur visuel de liste, détails de page, extraction de chaque URL, historique et recettes, finitions) arrivent progressivement.
+> **État d'avancement** : étapes (a), (b) et (c) livrées : fenêtre, détection automatique, tableau, export CSV / XLSX / copie, **sélecteur visuel** (choisir la liste et les colonnes par clic), **pagination multi-pages**. Les étapes suivantes (détails de page, extraction de chaque URL, historique et recettes, finitions) arrivent progressivement.
 
 ## Installation (développeurs)
 
@@ -32,7 +32,17 @@ Pendant le développement, `npm run dev` recompile automatiquement à chaque mod
 4. Pour récupérer **toutes les pages**, choisissez l'**Action pour charger plus d'éléments** (souvent déjà présélectionnée) puis cliquez sur **Extraire toutes les pages** (voir ci-dessous).
 5. Cliquez sur **Copier** (format tabulé, à coller dans Google Sheets ou Excel) ou sur **Télécharger** (Excel `.xlsx`, CSV pour Excel avec `;`, ou CSV standard avec `,`). Le nom de fichier est automatique : `domaine_AAAA-MM-JJ_HH-MM`.
 
-> « Liste suivante / précédente » ne change **pas** de page : ces boutons passent d'une liste détectée à une autre sur la même page (produits, filtres, catégories…).
+### Choisir soi-même le bloc à extraire (avis, commentaires…)
+
+Si la liste proposée n'est pas celle que vous voulez :
+
+1. Cliquez sur **Modifier la liste**, puis, dans la page, sur **un élément du bloc voulu** (par exemple le texte d'un avis). Tous les éléments du même type sont surlignés et comptés.
+2. Si ce n'est pas le bon bloc, cliquez sur un **2e élément du même type** (un autre avis) : la sélection est recalculée à partir des deux.
+3. Validez avec le bouton **Valider** du bandeau (ou la touche Entrée). Échap annule.
+
+Une donnée manque ? **Ajouter une colonne**, puis cliquez sur la donnée (auteur, date, badge…) dans un des éléments surlignés ; vous pouvez en ajouter plusieurs à la suite, puis **Terminer**. Les clics sont interceptés : la page ne réagit pas pendant la sélection.
+
+> Les flèches ‹ › à côté de « Liste 1 sur N » ne changent **pas** de page : ces boutons passent d'une liste détectée à une autre sur la même page (produits, filtres, catégories…).
 
 ### Pagination : « Action pour charger plus d'éléments »
 
@@ -43,7 +53,8 @@ Pendant le développement, `npm run dev` recompile automatiquement à chaque mod
 | **Clic sur « Charger plus »** | Bouton « Voir plus », « Afficher plus de résultats »… | Clique sur le bouton tant qu'il existe |
 | **Lien « Page suivante »** | Pagination classique (Suivant, ›, », 1 2 3…) | Passe de page en page ; après chaque chargement, le script est réinjecté et le DOM attendu stable avant l'extraction. Marche aussi sur les sites SPA où la page ne se recharge pas |
 
-- Le bouton ou lien est **détecté automatiquement** (rel="next", textes « Suivant », « Next », « › », numéro de page suivant, boutons « Charger plus »…) et le mode correspondant est présélectionné. En cas d'erreur, **Changer** permet de cliquer vous-même sur le bon bouton dans la page.
+- Le bouton ou lien est **détecté automatiquement** (rel="next", textes « Suivant », « Next », « › », numéro de page suivant, boutons « Charger plus »…) et le mode correspondant est présélectionné.
+- **Sélectionner le bouton sur la page** : cliquez vous-même sur le bouton « Suivant » ou « Charger plus » du site. Fonctionne aussi depuis « Aucune » : le mode se règle tout seul selon le bouton cliqué.
 - Réglages : nombre maximal de pages, délai aléatoire entre deux pages (min–max, en secondes).
 - Pendant l'extraction : barre de progression, **Pause / Reprendre / Stop**, lignes ajoutées en direct au tableau. Les doublons entre pages sont supprimés automatiquement.
 - L'extraction s'arrête toute seule quand il n'y a plus de page suivante, plus de bouton, plus rien à charger, ou quand une page ne contient que des doublons.
@@ -86,6 +97,7 @@ Pages de test fournies dans `test-pages/` (copies fidèles du balisage réel, ut
 | `grand-volume.html` | 10 000 fiches | Analyse complète en ~3 s, tableau fluide |
 | `fil-infini.html` | Défilement infini de la page entière | 60 annonces en 3 chargements |
 | `spa-pagination.html` | Pagination d'application monopage (bouton sans lien) | 30 offres sur 3 pages |
+| `fiche-avis.html` | Fiche produit : produits similaires + avis clients | Liste 1 = produits similaires ; « Modifier la liste » → 4 avis (Auteur, Note, Titre, Date…) |
 
 Pagination dans les pages de test : `amazon.html` (3 pages, lien « Suivant »), `prestashop.html` (2 pages, « Suivant » désactivé en fin), `google-maps.html` (défilement du panneau interne, 48 lieux), `blog.html` (bouton « Charger plus », 15 articles).
 
@@ -98,7 +110,8 @@ src/
 │   ├── detect/      détection des listes, extraction des champs, nommage des colonnes
 │   ├── highlight.ts surbrillance (Shadow DOM fermé, aucun conflit de style)
 │   ├── paginate.ts  repérage et actions de pagination (suivant, charger plus, défilement)
-│   ├── picker.ts    choix d'un élément par clic sur la page
+│   ├── picker.ts    calque de sélection par clic (survol, bandeau, clics interceptés)
+│   ├── listPicker.ts  choix de la liste (1 ou 2 clics) et ajout de colonne par clic
 │   ├── listResolver.ts  retrouve la liste après un chargement ou sur la page suivante
 │   ├── domStable.ts attente de stabilité du DOM (SPA)
 │   └── traverse.ts  parcours Shadow DOM ouvert + iframes accessibles

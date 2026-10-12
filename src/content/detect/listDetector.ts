@@ -148,7 +148,7 @@ function prescore(g: { items: Element[] }): number {
   return Math.log2(g.items.length + 1) * (1 + Math.min(avgText, 200) / 60);
 }
 
-function buildSelector(container: Element, items: Element[], merged: boolean): string {
+export function buildSelector(container: Element, items: Element[], merged: boolean): string {
   try {
     const itemSeg = commonSegment(items);
     if (merged && items[0].parentElement) {

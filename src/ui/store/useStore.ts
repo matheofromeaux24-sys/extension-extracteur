@@ -54,6 +54,8 @@ export interface State {
   toast: Toast | null;
   pagination: PaginationSettings;
   job: JobState | null;
+  /** Sélection par clic en cours dans la page. */
+  picking: 'list' | 'column' | null;
 }
 
 export function jobActive(job: JobState | null): boolean {
@@ -85,6 +87,7 @@ export const useStore = create<State>(() => ({
     picking: false,
   },
   job: null,
+  picking: null,
 }));
 
 export function setPagination(patch: Partial<PaginationSettings>): void {
