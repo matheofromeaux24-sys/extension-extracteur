@@ -264,14 +264,20 @@
 
     <!-- =========================================================
          BANDEAU DES SOLS LISSES (décoratif), entre le hero et la section 4.
-         Arrivé au milieu de l'écran, il se fige : le défilement fait alors
-         glisser les mots à l'horizontale, jusqu'au dernier, puis la page
-         reprend. Défilement natif ; sans mouvement, le bandeau reste fixe.
+         Un grand panneau aux couleurs du site. Arrivé en haut de l'écran, il
+         se fige et le défilement devient horizontal : toute la bande de mots
+         glisse vers la gauche, la couleur du panneau change en douceur au fil
+         des mots, puis le défilement redevient vertical. Défilement natif ;
+         sans mouvement, c'est un bandeau fixe.
          ========================================================= -->
     <div class="floors" aria-hidden="true">
       <div class="floors__band">
-        <p class="floors__row" data-drift><span>Parquet ciré</span><span class="floors__picot"></span><span>Carrelage</span><span class="floors__picot"></span><span>Stratifié</span><span class="floors__picot"></span><span>Béton ciré</span><span class="floors__picot"></span><span>Marbre</span></p>
-        <p class="floors__row floors__row--outline" data-drift><span>Carrelage</span><span class="floors__picot"></span><span>Vinyle</span><span class="floors__picot"></span><span>Parquet vitrifié</span><span class="floors__picot"></span><span>Tomettes</span><span class="floors__picot"></span><span>Lino</span></p>
+        <div class="floors__strip" data-drift data-motion-ref=".floors">
+          <p class="floors__row"><span>Parquet ciré</span><span class="floors__picot"></span><span>Carrelage</span><span class="floors__picot"></span><span>Stratifié</span><span class="floors__picot"></span><span>Béton ciré</span><span class="floors__picot"></span><span>Marbre</span></p>
+          <p class="floors__row floors__row--outline"><span>Carrelage</span><span class="floors__picot"></span><span>Vinyle</span><span class="floors__picot"></span><span>Parquet vitrifié</span><span class="floors__picot"></span><span>Tomettes</span><span class="floors__picot"></span><span>Lino</span></p>
+        </div>
+        <!-- Barre de défilement horizontal : la ligne se remplit, le picot avance -->
+        <div class="floors__progress"><span class="floors__progress-fill"></span><span class="floors__progress-dot"></span></div>
       </div>
     </div>
 

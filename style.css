@@ -130,6 +130,10 @@ body {
   overflow-wrap: break-word;
 }
 
+/* Les effets 3D (panneaux qui se redressent en perspective) ne doivent jamais
+   élargir la page sur mobile : on coupe à la largeur de l'écran (clip garde les éléments collants) */
+main { overflow-x: clip; }
+
 h1, h2, h3, p, figure, blockquote { margin: 0; }
 h1, h2, h3 {
   font-family: var(--font-display);
@@ -1933,14 +1937,41 @@ strong { font-weight: 700; }
    20. BANDEAU DES SOLS, OMBRES DE PICOTS, PICOT VOLANT
    Styles de base, visibles même sans animation.
    ========================================================================== */
-/* Une piste (.floors, pleine largeur) qui contient le bandeau (.floors__band) */
+/* Une piste (.floors) qui contient un grand panneau (.floors__band) ;
+   la bande de mots (.floors__strip) y glisse comme une page qui défilerait à l'horizontale */
 .floors {
-  --floors-fs: clamp(2.75rem, 7vw + 1rem, 8rem);
-  margin: clamp(3.5rem, 8vw, 7rem) calc(50% - 50vw) 0;
+  --floors-fs: clamp(3.25rem, 8vw + 1rem, 10rem);
+  margin-top: var(--gutter); /* le hero est un panneau : même écart que sur les côtés */
+}
+/* Téléphone en portrait : le panneau est haut et étroit, les mots grandissent avec sa hauteur */
+@media (max-width: 47.99em) {
+  /* … sans dépasser la largeur de l'écran : « Parquet vitrifié », le plus long, mesure 6,6 em */
+  .floors { --floors-fs: min(clamp(3rem, 9vh, 5.5rem), (100vw - 2 * var(--gutter)) / 6.8); }
 }
 .floors__band {
-  padding-block: .25rem;
+  position: relative;
+  width: min(100% - 2 * var(--gutter), var(--max));
+  margin-inline: auto;
+  padding-block: clamp(2.5rem, 6vw, 4.5rem);
   overflow: hidden;
+  border-radius: var(--radius-panel);
+  background: var(--floors-bg, var(--jaune));
+}
+.floors__strip {
+  position: relative;
+  isolation: isolate;
+  width: max-content;
+}
+/* Trame de picots portée par la bande : elle glisse avec les mots */
+.floors__strip::before {
+  content: "";
+  position: absolute;
+  inset: -60vh 0;
+  z-index: -1;
+  background-color: var(--aubergine);
+  opacity: .08;
+  -webkit-mask: var(--dots) 0 0 / var(--dots-size) var(--dots-size) repeat;
+  mask: var(--dots) 0 0 / var(--dots-size) var(--dots-size) repeat;
 }
 .floors__row {
   display: flex;
@@ -1948,8 +1979,8 @@ strong { font-weight: 700; }
   gap: .32em;
   width: max-content;
   margin: 0;
-  /* Premier et dernier mot alignés sur les marges du contenu de la page */
-  padding-inline: calc((100% - var(--content-w)) / 2);
+  /* Premier et dernier mot alignés sur la marge intérieure des panneaux */
+  padding-inline: var(--pad-x);
   font-family: var(--font-display);
   font-size: var(--floors-fs);
   font-weight: 600;
@@ -1966,9 +1997,10 @@ strong { font-weight: 700; }
   width: .2em;
   height: .2em;
   border-radius: 50%;
-  background: var(--rose);
+  background: var(--creme); /* reste visible quelle que soit la couleur du panneau */
   box-shadow: 0 0 0 max(2px, .035em) var(--aubergine);
 }
+.floors__progress { display: none; } /* uniquement pendant le défilement horizontal */
 
 /* Chiffres des étapes : une copie en picots décalée derrière, comme l'ombre des photos */
 .steps__num {
@@ -2010,7 +2042,7 @@ strong { font-weight: 700; }
 /* ==========================================================================
    21. MOUVEMENT AU DÉFILEMENT ET 3D
    Le défilement reste natif : main.js lit sa position et sa vitesse et écrit
-   des variables (--g, --s, --c, --x, --x1, --x2, --dx, --rx, --ry, --wg…).
+   des variables (--g, --s, --c, --x, --fx, --fp, --dx, --rx, --ry, --wg…).
    Leur valeur par défaut correspond à l'état final : sans JavaScript ou avec
    prefers-reduced-motion, tout est simplement à sa place.
    ========================================================================== */
@@ -2022,13 +2054,14 @@ strong { font-weight: 700; }
       translateX(calc(var(--dx, 0) * var(--drift-k, 1) * 1px))
       skewX(calc(var(--dx, 0) * var(--drift-k, 1) * -.18deg));
   }
-  .has-motion .floors__row { --drift-k: 3; will-change: translate, transform; }
   .has-motion .steps__num { --drift-k: 1.4; }
   .has-motion .footer__mark { --drift-k: 1.6; }
 
-  /* Bandeau des sols : il se fige au milieu de l'écran, et le défilement fait
-     glisser les deux rangées à l'horizontale, en sens contraire, jusqu'au
-     dernier mot. main.js écrit --x1, --x2 et la longueur de piste --floors-run. */
+  /* Bandeau des sols : arrivé en haut de l'écran, le panneau se fige et le
+     défilement devient horizontal (toute la bande glisse vers la gauche, la
+     couleur du panneau change en douceur au fil des mots) ; au dernier mot,
+     le défilement redevient vertical. main.js écrit --fx, --fp, --fdot,
+     --floors-bg et la longueur de la piste --floors-run. */
   .has-motion .floors::after {
     content: "";
     display: block;
@@ -2036,13 +2069,50 @@ strong { font-weight: 700; }
   }
   .has-motion .floors__band {
     position: sticky;
-    top: calc((100vh + var(--bar-h-sm)) / 2 - 1.1 * var(--floors-fs) - .25rem);
+    top: calc(var(--bar-h-sm) + var(--gutter));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: calc(100vh - var(--bar-h-sm) - 2 * var(--gutter));
+    padding-block: 0;
+    transition: background-color .6s ease-out; /* lisse les crans de la molette */
   }
   @supports (height: 1svh) {
-    .has-motion .floors__band { top: calc((100svh + var(--bar-h-sm)) / 2 - 1.1 * var(--floors-fs) - .25rem); }
+    .has-motion .floors__band { height: calc(100svh - var(--bar-h-sm) - 2 * var(--gutter)); }
   }
-  .has-motion .floors__row { translate: calc(var(--x1, 0) * 1px) 0; }
-  .has-motion .floors__row--outline { translate: calc(var(--x2, 0) * 1px) 0; }
+  .has-motion .floors__strip {
+    --drift-k: 1.5;
+    translate: calc(var(--fx, 0) * -1px) 0;
+    will-change: translate, transform;
+  }
+  .has-motion .floors__progress {
+    display: block;
+    position: absolute;
+    right: var(--pad-x);
+    bottom: clamp(1.5rem, 4vw, 3rem);
+    left: var(--pad-x);
+    height: 2px;
+    background: var(--aubergine-12);
+  }
+  .floors__progress-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--aubergine);
+    transform-origin: 0 50%;
+    transform: scaleX(var(--fp, 0));
+  }
+  .floors__progress-dot {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: .875rem;
+    height: .875rem;
+    margin: -.4375rem 0 0 -.4375rem;
+    border-radius: 50%;
+    background: var(--creme);
+    box-shadow: 0 0 0 2px var(--aubergine);
+    translate: calc(var(--fdot, 0) * 1px) 0;
+  }
 
   /* Glissade d'entrée : glisse, dépasse un peu, s'arrête net */
   .has-motion [data-motion~="glide"] { translate: calc((1 - var(--g, 1)) * -28vw) 0; }

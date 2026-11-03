@@ -513,10 +513,11 @@
   var buySection = $('#acheter');
   var heroCtaPassed = false;
   var inBuySection = false;
+  var floorsPinned = false; // bandeau des sols en défilement horizontal (section 11)
 
   function updateBuybar() {
     if (!buybar) return;
-    var show = heroCtaPassed && !inBuySection && !state.menuOpen && !state.cartOpen;
+    var show = heroCtaPassed && !inBuySection && !floorsPinned && !state.menuOpen && !state.cartOpen;
     buybar.classList.toggle('is-visible', show);
     buybar.inert = !show;
   }
@@ -604,15 +605,30 @@
     measureKit();
   }
 
-  /* Bandeau des sols : sa piste est aussi longue que le trajet horizontal
-     des mots. Pendant qu'on la parcourt, le bandeau reste figé au milieu de
-     l'écran et les rangées glissent en sens contraire jusqu'au dernier mot. */
+  /* Bandeau des sols : arrivé en haut de l'écran, le panneau se fige et le
+     défilement devient horizontal. Sa piste est aussi longue que le trajet de
+     la bande de mots ; au dernier mot, le défilement redevient vertical. */
+  function hexToRgb(hex) {
+    var h = hex.trim().replace('#', '');
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+  // Couleur du panneau : passage en douceur d'une couleur de la charte à la suivante
+  function floorsColor(p) {
+    var stops = motion.floors.colors;
+    var n = stops.length - 1;
+    var x = clamp(p, 0, 1) * n;
+    var i = Math.min(n - 1, Math.floor(x));
+    var t = smoothstep(clamp(x - i, 0, 1));
+    var a = stops[i];
+    var b = stops[i + 1];
+    return 'rgb(' + [0, 1, 2].map(function (c) { return Math.round(a[c] + (b[c] - a[c]) * t); }).join(' ') + ')';
+  }
+
   function measureFloors() {
     var f = motion.floors;
     if (!f) return;
-    var width = f.band.clientWidth;
-    f.travel = f.rows.map(function (row) { return Math.max(0, row.offsetWidth - width); });
-    var run = Math.round(Math.max.apply(null, f.travel) * 0.9);
+    f.travel = Math.max(0, f.strip.offsetWidth - f.band.clientWidth);
+    var run = Math.round(f.travel); // 1 px vers le bas = 1 px vers la droite
     if (f.run !== run) {
       f.run = run;
       f.el.style.setProperty('--floors-run', run + 'px');
@@ -620,16 +636,40 @@
     f.top = docTop(f.el);
     f.h = f.el.offsetHeight;
     f.stickTop = parseFloat(window.getComputedStyle(f.band).top) || 0;
+    f.barW = f.bar ? f.bar.clientWidth : 0;
   }
 
   function floorsFrame(y, vh) {
     var f = motion.floors;
     var top = f.top - y;
     if (top > vh * 1.3 || top + f.h < -vh * 0.3) return; // hors champ
-    // 0 quand le bandeau se fige, 1 quand le dernier mot est arrivé
+    // 0 quand le panneau se fige, 1 quand le dernier mot est arrivé
     var p = f.run ? clamp((y + f.stickTop - f.top) / f.run, 0, 1) : 0;
-    setVar(f, '--x1', -p * f.travel[0]);         // fin de la 1re rangée : elle part vers la gauche
-    setVar(f, '--x2', -(1 - p) * f.travel[1]);   // 2e rangée : elle part de sa fin, vers la droite
+    setVar(f, '--fx', p * f.travel);
+    setVar(f, '--fp', p);
+    setVar(f, '--fdot', p * f.barW);
+    var bg = floorsColor(p);
+    if (f.bg !== bg) {
+      f.bg = bg;
+      f.el.style.setProperty('--floors-bg', bg);
+    }
+    // Pendant le défilement horizontal, la barre d'achat mobile s'efface
+    var pinned = p > 0 && p < 1;
+    if (floorsPinned !== pinned) {
+      floorsPinned = pinned;
+      updateBuybar();
+    }
+  }
+
+  function resetFloors() {
+    var f = motion.floors;
+    if (!f) return;
+    f.el.style.removeProperty('--floors-bg');
+    f.bg = '';
+    if (floorsPinned) {
+      floorsPinned = false;
+      updateBuybar();
+    }
   }
 
   /* La chaussette en kit : chaque pièce suit la position de son texte.
@@ -786,10 +826,16 @@
 
     var floorsEl = $('.floors');
     if (floorsEl) {
+      var tokens = window.getComputedStyle(root);
       motion.floors = {
-        el: floorsEl, cache: {}, top: 0, h: 0, run: -1, stickTop: 0, travel: [0, 0],
+        el: floorsEl, cache: {}, top: 0, h: 0, run: -1, stickTop: 0, travel: 0, barW: 0, bg: '',
         band: $('.floors__band', floorsEl),
-        rows: $$('.floors__row', floorsEl)
+        strip: $('.floors__strip', floorsEl),
+        bar: $('.floors__progress', floorsEl),
+        // Couleurs de la charte (lues dans style.css) : jaune → pêche → rose → jaune → pêche
+        colors: ['--jaune', '--peche', '--rose', '--jaune', '--peche'].map(function (name) {
+          return hexToRgb(tokens.getPropertyValue(name));
+        })
       };
     }
 
@@ -860,6 +906,7 @@
     motion.on = false;
     root.classList.remove('has-motion');
     resetKit();
+    resetFloors();
     if (motion.raf) {
       window.cancelAnimationFrame(motion.raf);
       motion.raf = 0;
