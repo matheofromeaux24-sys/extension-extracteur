@@ -3,8 +3,9 @@
    JavaScript natif, sans dépendance. Aucun texte n'est injecté :
    tout le contenu est dans le HTML, le script ne fait qu'afficher, masquer
    et mettre à jour des chiffres (quantités, prix).
-   Mouvement au défilement et 3D : section 11. Le défilement reste natif,
-   et tout est coupé si l'utilisateur demande à réduire les animations.
+   Mouvement au défilement et 3D : section 11 (dont la chaussette en kit,
+   qui se monte pièce par pièce). Le défilement reste natif, et tout est
+   coupé si l'utilisateur demande à réduire les animations.
    ========================================================================== */
 (function () {
   'use strict';
@@ -28,7 +29,7 @@
   var desktop = window.matchMedia('(min-width: 64em)');
   var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   var motion = {
-    on: false, ready: false, items: [], tilts: [], hero: null, raf: 0,
+    on: false, ready: false, items: [], tilts: [], hero: null, kit: null, raf: 0,
     lastY: 0, lastScrollAt: 0, vh: window.innerHeight, maxScroll: 0,
     spring: { x: 0, v: 0 }
   };
@@ -573,6 +574,9 @@
   function smoothstep(t) { return t * t * (3 - 2 * t); }
   // Courbe « ça glisse… puis ça accroche » : dépasse sa cible de 2 % environ, puis revient
   function grip(t) { var u = t - 1; return 1 + 1.8 * u * u * u + 0.8 * u * u; }
+  // Même idée, étalée sur toute la course (pièces de la chaussette en kit) :
+  // la pièce glisse régulièrement, dépasse sa place de 4 % puis accroche
+  function slideGrip(t) { return t < 0.8 ? 1.04 * smoothstep(t / 0.8) : 1.04 - 0.04 * smoothstep((t - 0.8) / 0.2); }
   // Position dans la page sans tenir compte des transform déjà appliqués
   function docTop(el) {
     var y = 0;
@@ -596,6 +600,63 @@
       item.h = item.ref.offsetHeight;
     });
     if (motion.hero) motion.hero.h = motion.hero.el.offsetHeight;
+    measureKit();
+  }
+
+  /* La chaussette en kit : chaque pièce suit la position de son texte.
+     Desktop : le texte défile à côté de la scène collante.
+     Mobile : la scène reste en haut, le texte passe dessous. */
+  function measureKit() {
+    var kit = motion.kit;
+    if (!kit) return;
+    kit.top = docTop(kit.el);
+    kit.h = kit.el.offsetHeight;
+    kit.steps.forEach(function (step) { step.top = docTop(step.el); });
+    kit.stacked = !desktop.matches;
+    kit.stageBottom = (parseFloat(window.getComputedStyle(kit.stage.el).top) || 0) + kit.stage.el.offsetHeight;
+  }
+
+  function kitFrame(y, vh) {
+    var kit = motion.kit;
+    var top = kit.top - y;
+    if (top > vh * 1.3 || top + kit.h < -vh * 0.3) return; // hors champ
+    // Le haut du texte d'une étape passe de « start » à « end » : sa pièce va de 0 (éclatée) à 1 (en place)
+    // (sur mobile, le départ est au-dessus de la barre d'achat, qui masque le bas de l'écran)
+    var start = kit.stacked ? vh * 0.88 : vh * 0.85;
+    var end = kit.stacked ? kit.stageBottom + (vh - kit.stageBottom) * 0.15 : vh * 0.4;
+    var span = Math.max(1, start - end);
+    kit.steps.forEach(function (step, i) {
+      var t = clamp((start - (step.top - y)) / span, 0, 1);
+      var n = i + 1;
+      setVar(step, '--t', t);
+      setVar(kit.stage, '--k' + n, slideGrip(t));
+      setVar(kit.stage, '--k' + n + 's', smoothstep(t));
+      var locked = t >= 1;
+      if (step.locked !== locked) { // la pièce accroche (ou se décroche si l'on remonte)
+        step.locked = locked;
+        step.el.classList.toggle('is-locked', locked);
+        kit.stage.el.classList.toggle('is-l' + n, locked);
+      }
+    });
+    // Progression globale : la caméra tourne pendant tout le montage
+    var first = kit.steps[0].top;
+    var last = kit.steps[kit.steps.length - 1].top;
+    setVar(kit.stage, '--kp', clamp((start - (first - y)) / Math.max(1, last - first + span), 0, 1));
+  }
+
+  // Retour à la chaussette montée (mouvement coupé en cours de visite)
+  function resetKit() {
+    var kit = motion.kit;
+    if (!kit) return;
+    [kit.stage].concat(kit.steps).forEach(function (item) {
+      Object.keys(item.cache).forEach(function (name) { item.el.style.removeProperty(name); });
+      item.cache = {};
+    });
+    kit.steps.forEach(function (step, i) {
+      step.locked = false;
+      step.el.classList.remove('is-locked');
+      kit.stage.el.classList.remove('is-l' + (i + 1));
+    });
   }
 
   function requestMotionFrame() {
@@ -640,6 +701,8 @@
       }
       if (item.drift) setVar(item, '--dx', spring.x);
     });
+
+    if (motion.kit) kitFrame(y, vh);
 
     // Hero : progression de sortie (l'accroche glisse, la photo se décolle)
     var heroProgress = 0;
@@ -692,6 +755,18 @@
 
     var heroEl = $('[data-motion="hero"]');
     if (heroEl) motion.hero = { el: heroEl, cache: {}, h: 0 };
+
+    var kitEl = $('.kit');
+    var kitStage = kitEl && $('.kit__stage', kitEl);
+    if (kitStage) {
+      motion.kit = {
+        el: kitEl, top: 0, h: 0, stacked: false, stageBottom: 0,
+        stage: { el: kitStage, cache: {} },
+        steps: $$('[data-kit-step]', kitEl).map(function (el) {
+          return { el: el, cache: {}, top: 0, locked: false };
+        })
+      };
+    }
 
     // Inclinaison au pointeur (souris uniquement : rien au doigt)
     motion.tilts = $$('[data-tilt]').map(function (el) {
@@ -747,6 +822,7 @@
   function stopMotion() {
     motion.on = false;
     root.classList.remove('has-motion');
+    resetKit();
     if (motion.raf) {
       window.cancelAnimationFrame(motion.raf);
       motion.raf = 0;

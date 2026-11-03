@@ -2,7 +2,8 @@
    Mistigrip — style.css
    Concept : « ça glisse… puis ça accroche ».
    Mouvement : chargement du hero et réponses aux actions (section 19),
-   défilement et 3D (section 21). Tout est coupé avec prefers-reduced-motion.
+   défilement et 3D (section 21), chaussette en kit en vue éclatée
+   (section 22). Tout est coupé avec prefers-reduced-motion.
    Mobile first. Points de rupture : 48em (768 px), 64em (1024 px).
    Aucune priorité forcée, aucun dégradé, aucune couleur hors charte.
    ========================================================================== */
@@ -2149,5 +2150,341 @@ strong { font-weight: 700; }
       transition: block-size .45s var(--ease-snap), content-visibility .45s allow-discrete;
     }
     .faq__item[open]::details-content { block-size: auto; }
+  }
+}
+
+
+/* ==========================================================================
+   22. LA CHAUSSETTE EN KIT — panneau aubergine, vue éclatée en 3D
+   La chaussette est dessinée en calques SVG plats, empilés en 3D (CSS).
+   Unité --u : une fraction du plus petit côté de la scène (requêtes de
+   conteneur), pour que tout tienne de 360 à 1600 px.
+   Variables écrites par main.js sur .kit__stage :
+     --k1 … --k4   pièce n : 0 éclatée → 1 en place, avec un léger dépassement
+     --k1s … --k4s même progression, sans dépassement (profondeur, opacité)
+     --kp          progression globale (la caméra tourne autour de la chaussette)
+   Valeur par défaut = 1 : sans JavaScript ou avec prefers-reduced-motion,
+   la chaussette est montée et le lot de 4 affiché.
+   ========================================================================== */
+.kit {
+  margin-bottom: var(--gutter); /* le panneau achat suit : même écart que sur les côtés */
+  overflow: clip;               /* la scène 3D ne déborde jamais du panneau (clip garde l'effet collant) */
+}
+.kit__head { margin-bottom: clamp(2rem, 5vw, 3rem); }
+.kit__title-main { max-width: 16ch; }
+.kit__lead { margin-top: 1.25rem; color: var(--creme-80); }
+
+/* Étapes : numéro, jauge de pose, titre, argument */
+.kit__steps {
+  display: grid;
+  gap: 2.5rem;
+  margin: 2.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.kit__end { margin-top: 2.5rem; }
+.kit__meta {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  margin-bottom: 1rem;
+}
+.kit__num {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.kit__meter {
+  position: relative;
+  width: min(9rem, 40%);
+  height: 2px;
+  background: var(--creme-20);
+}
+.kit__fill {
+  position: absolute;
+  inset: 0;
+  background: var(--rose);
+  transform-origin: 0 50%;
+  transform: scaleX(var(--t, 1));
+}
+/* Le picot qui « accroche » quand la pièce est en place */
+.kit__dot {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: .75rem;
+  height: .75rem;
+  margin: -.375rem -.375rem 0 0;
+  border-radius: 50%;
+  background: var(--rose);
+}
+.kit__title {
+  max-width: 20ch;
+  font-size: clamp(1.5rem, 1.2vw + 1.15rem, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: -.01em;
+}
+.kit__text {
+  max-width: var(--measure);
+  margin-top: .75rem;
+  color: var(--creme-80);
+}
+.kit__buy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  margin-top: 1.75rem;
+}
+.kit__price { color: var(--creme-80); font-weight: 600; }
+.kit__price .price { color: var(--creme); font-size: 1.5rem; }
+
+/* Scène 3D */
+.kit__stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 36rem;
+}
+.kit__view {
+  --kit-span: 600;                 /* unités visibles sur le plus petit côté */
+  --u: .9px;                       /* repli sans requêtes de conteneur */
+  position: absolute;
+  inset: 0;
+  perspective: calc(1500 * var(--u));
+}
+@supports (width: 1cqmin) {
+  .kit__stage { container-type: size; }
+  .kit__view { --u: calc(100cqmin / var(--kit-span)); }
+}
+.kit__model {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-style: preserve-3d;
+  transform:
+    translateY(calc(var(--kit-y, 0) * var(--u)))
+    rotateX(calc(60deg - var(--kp, 1) * 26deg))
+    rotateZ(calc(-38deg + var(--kp, 1) * 34deg))
+    scale(calc(1 - var(--k4s, 1) * .16));
+}
+
+/* Calques : boîte de 230 × 380 unités centrée sur le modèle */
+.kit__layer,
+.kit__floor,
+.kit__guide { position: absolute; }
+.kit__layer {
+  top: calc(-190 * var(--u));
+  left: calc(-115 * var(--u));
+  width: calc(230 * var(--u));
+  height: calc(380 * var(--u));
+  overflow: visible;
+}
+.kit__sock,
+.kit__extra,
+.kit__part--body,
+.kit__part--cuff {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-style: preserve-3d;
+}
+
+/* Sol en picots, sous la chaussette */
+.kit__floor {
+  top: calc(-280 * var(--u));
+  left: calc(-280 * var(--u));
+  width: calc(560 * var(--u));
+  height: calc(560 * var(--u));
+  border-radius: 50%;
+  background: var(--creme);
+  opacity: .14;
+  -webkit-mask: var(--dots) 0 0 / calc(24 * var(--u)) calc(24 * var(--u)) repeat;
+  mask: var(--dots) 0 0 / calc(24 * var(--u)) calc(24 * var(--u)) repeat;
+  transform: translateZ(calc(-70 * var(--u)));
+}
+
+/* Épaisseur : copies teintées, décalées vers le bas */
+.kit__edge--1 { transform: translateZ(calc(-3 * var(--u))); }
+.kit__edge--2 { transform: translateZ(calc(-6 * var(--u))); }
+.kit__edge--3 { transform: translateZ(calc(-9 * var(--u))); }
+
+/* Étape 4 : le lot s'ouvre en éventail autour des revers */
+.kit__sock {
+  transform:
+    translateY(calc(182 * var(--u)))
+    rotateZ(calc(var(--k4, 1) * 10deg))
+    translateY(calc(-182 * var(--u)));
+}
+.kit__extra {
+  transform:
+    translateY(calc(182 * var(--u)))
+    rotateZ(calc(var(--k4, 1) * var(--fan)))
+    translateY(calc(-182 * var(--u)))
+    translateZ(calc(var(--fz) * var(--u)));
+}
+.kit__extra--1 { --fan: -10deg; --fz: -16; }
+.kit__extra--2 { --fan: 30deg; --fz: -28; }
+.kit__extra--3 { --fan: -30deg; --fz: -40; }
+
+/* Étapes 1 à 3 : la maille se pose, les picots descendent, le revers glisse */
+.kit__part--body { scale: calc(.94 + var(--k1, 1) * .06); }
+.kit__part--picots {
+  transform:
+    translateZ(calc((2 + (1 - var(--k2s, 1)) * 230) * var(--u)))
+    scale(calc(1 + (var(--k2, 1) - 1) * 1.6));
+}
+.kit__part--cuff {
+  transform: translate3d(0, calc((1 - var(--k3, 1)) * 150 * var(--u)), calc(4 * var(--u)));
+}
+.kit__ghost,
+.kit__guide { display: none; }
+
+/* Peinture des calques (les formes sont dans le sprite, la couleur vient de la classe) */
+.kit-knit__stitch {
+  fill: none;
+  stroke: var(--aubergine);
+  stroke-opacity: .2;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.kit__skin,
+.kit__cuff {
+  fill: var(--rose);
+  stroke: var(--aubergine);
+  stroke-width: 12;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.kit__knit { fill: url(#kit-knit); }
+.kit__edge-base,
+.kit__edge-shade { stroke-width: 12; stroke-linejoin: round; }
+.kit__edge-base { fill: var(--rose); stroke: var(--rose); }
+.kit__edge-shade { fill: var(--aubergine); stroke: var(--aubergine); opacity: .5; }
+.kit__ribs { fill: none; stroke: var(--aubergine); stroke-width: 3; stroke-linecap: round; }
+/* Anneau rose peint sous le picot : visible quand il flotte, fondu dans la maille une fois posé */
+.kit__picots { fill: var(--aubergine); stroke: var(--rose); stroke-width: 6; paint-order: stroke; }
+.kit__picots--flat { stroke: none; }
+.kit__ghost-line {
+  fill: none;
+  stroke: var(--creme);
+  stroke-opacity: .6;
+  stroke-width: 2.5;
+  stroke-dasharray: 7 8;
+  stroke-linecap: round;
+}
+
+/* Desktop : texte à gauche, scène collante à droite */
+@media (min-width: 64em) {
+  .kit__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    column-gap: clamp(3rem, 6vw, 7rem);
+    align-items: start;
+  }
+  .kit__track { display: contents; }
+  .kit__head { grid-column: 1; grid-row: 1; }
+  .kit__steps { grid-column: 1; grid-row: 2; margin-top: 0; }
+  .kit__end { grid-column: 1; grid-row: 3; }
+  .kit__stage {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    position: sticky;
+    top: calc(var(--bar-h-sm) + 1.5rem);
+    height: min(calc(100vh - var(--bar-h-sm) - 3rem), 50rem);
+    max-height: none;
+    aspect-ratio: auto;
+  }
+  .kit__view { --kit-span: 640; --kit-y: -36; }
+}
+@supports (height: 1svh) {
+  @media (min-width: 64em) {
+    .kit__stage { height: min(calc(100svh - var(--bar-h-sm) - 3rem), 50rem); }
+  }
+}
+
+/* --- Montage au défilement (coupé avec prefers-reduced-motion) --- */
+@media (prefers-reduced-motion: no-preference) {
+  .has-motion .kit__model[data-tilt] {
+    transform:
+      translateY(calc(var(--kit-y, 0) * var(--u)))
+      rotateX(calc(60deg - var(--kp, 1) * 26deg + var(--rx, 0) * .6deg))
+      rotateZ(calc(-38deg + var(--kp, 1) * 34deg + var(--ry, 0) * .8deg))
+      scale(calc(1 - var(--k4s, 1) * .16));
+  }
+
+  /* La maille se tricote des doigts jusqu'au revers, sur son patron en pointillés */
+  .has-motion .kit__ghost { display: block; opacity: clamp(0, calc((1 - var(--k1s, 1)) * 10), 1); }
+  .has-motion .kit__part--body > .kit__layer {
+    clip-path: inset(0 0 calc((1 - var(--k1s, 1)) * 100%) 0);
+  }
+
+  /* Lignes de montage : elles relient chaque pièce à sa place et rétrécissent */
+  .has-motion .kit__guide {
+    display: block;
+    top: calc(var(--gy) * var(--u));
+    left: calc(var(--gx) * var(--u));
+    width: 0;
+    border-left: 2px dashed var(--creme);
+    transform-origin: 0 0;
+  }
+  .has-motion .kit__guide--z {
+    height: calc(230 * var(--u));
+    opacity: clamp(0, calc((1 - var(--k2s, 1)) * 4), .5);
+    transform: rotateX(90deg) scaleY(calc(1 - var(--k2s, 1)));
+  }
+  .has-motion .kit__guide--y {
+    --gy: 120;
+    height: calc(150 * var(--u));
+    opacity: clamp(0, calc((1 - var(--k3s, 1)) * 4), .5);
+    transform: translateZ(calc(4 * var(--u))) scaleY(calc(1 - var(--k3s, 1)));
+  }
+
+  /* Les trois autres chaussettes n'apparaissent qu'à l'étape 4 */
+  .has-motion .kit__extra > .kit__layer { opacity: clamp(0, calc(var(--k4s, 1) * 8), 1); }
+
+  /* Les picots accrochent du centre vers les bords, la jauge plante son picot */
+  .has-motion .kit__part--picots circle { transform-box: fill-box; transform-origin: 50% 50%; }
+  .has-motion .kit__stage.is-l2 .kit__part--picots circle {
+    animation: kit-accroche .45s var(--d, 0ms) cubic-bezier(.3, 1.6, .5, 1) both;
+  }
+  @keyframes kit-accroche {
+    40% { scale: 1.7; }
+  }
+  .has-motion .kit__dot { scale: 0; transition: scale .35s cubic-bezier(.3, 1.8, .5, 1); }
+  .has-motion .kit__step.is-locked .kit__dot { scale: 1; }
+
+  /* Mobile : la scène reste en haut, le texte défile dessous */
+  @media (max-width: 63.99em) {
+    .has-motion .kit { --kit-stage-h: min(48vh, 28rem); }
+    .has-motion .kit__stage {
+      position: sticky;
+      top: var(--bar-h-sm);
+      z-index: 1;
+      height: var(--kit-stage-h);
+      max-height: none;
+      aspect-ratio: auto;
+      background: var(--aubergine);
+    }
+    .has-motion .kit__steps { gap: 0; margin-top: 0; }
+    .has-motion .kit__steps .kit__step {
+      min-height: calc(100vh - var(--bar-h-sm) - var(--kit-stage-h));
+      padding-top: 1.75rem;
+    }
+  }
+  @supports (height: 1svh) {
+    @media (max-width: 63.99em) {
+      .has-motion .kit { --kit-stage-h: min(48svh, 28rem); }
+      .has-motion .kit__steps .kit__step { min-height: calc(100svh - var(--bar-h-sm) - var(--kit-stage-h)); }
+    }
+  }
+
+  /* Desktop : chaque étape occupe une bonne hauteur d'écran */
+  @media (min-width: 64em) {
+    .has-motion .kit__steps { gap: 0; }
+    .has-motion .kit__steps .kit__step { min-height: 72vh; padding-top: 1rem; }
+    .has-motion .kit__end { min-height: 78vh; margin-top: 0; padding-top: 1rem; } /* laisse le lot affiché avant que la scène ne décolle */
   }
 }

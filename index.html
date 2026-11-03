@@ -146,6 +146,15 @@
     <symbol id="i-picots" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="7" cy="8.5" r="2.5"/><circle cx="17" cy="8.5" r="2.5"/><circle cx="12" cy="16" r="2.5"/></g></symbol>
     <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.6l2.85 5.8 6.4.93-4.63 4.5 1.1 6.37L12 17.2l-5.72 3 1.1-6.37-4.63-4.5 6.4-.93z"/></symbol>
     <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.75"/><path d="M12 7.75v5"/><circle cx="12" cy="16.25" r=".6" fill="currentColor"/></symbol>
+    <!-- Chaussette en kit : maille (rangées de mailles en V) et formes réutilisées -->
+    <defs>
+      <pattern id="kit-knit" width="11" height="9" patternUnits="userSpaceOnUse"><path class="kit-knit__stitch" d="M1.5 1.5 5.5 7 9.5 1.5"/></pattern>
+      <path id="kit-u-body" d="M79 30L73.4 39.7L66 48.8L65.9 186L45 186L-65.9 186L-66 48.8L-73.4 39.7L-79 30L-81.8 23.4L-83.9 16.7L-85.3 9.8L-85.9 2.9L-85.9 -4L-85.1 -11L-83.6 -17.9L-81.4 -24.5L-89.5 -30.2L-93.5 -33.8L-97.9 -39.3L-101.1 -45.3L-103.2 -52.1L-104 -58.8L-103.5 -65.9L-101.9 -72.6L-99.3 -78.3L-95.9 -83.5L-91.6 -88.1L-86.6 -91.9L-81.1 -94.9L-75.3 -96.8L-69.7 -97.8L-62.7 -98L-60.3 -104.8L-56.9 -110.8L-52.6 -116L-47.2 -120.6L-41.8 -123.8L-36 -126.1L-30.1 -127.5L-23.9 -128L-17.4 -127.4L-11.2 -125.9L-5.4 -123.4L0 -120L4.3 -122.8L8.7 -124.9L13.4 -126.6L18.5 -127.6L23.6 -128L28.7 -127.7L33.6 -126.8L38.4 -125.3L46.7 -120.9L53.8 -114.7L59.1 -107.2L62.9 -97.9L68 -97.9L73.2 -97.3L78.1 -96L82.8 -94.1L87.1 -91.6L91.2 -88.4L94.9 -84.7L97.9 -80.7L101.2 -74.4L103.2 -67.6L104 -60.4L103.4 -53.5L100.7 -44.5L96.1 -36.8L91 -31.4L81.4 -24.5L83.6 -17.9L85.1 -11L85.9 -4L85.9 2.9L85.3 9.8L83.9 16.7L81.8 23.4Z"/>
+      <path id="kit-u-full" d="M66 50L66 168.1L71.4 178.3L71.9 180.9L72 220.4L71.3 223.9L69.7 227L67.4 229.4L64.5 231.1L61.2 231.9L1 232L-61.2 231.9L-64.5 231.1L-67.4 229.4L-69.7 227L-71.3 223.9L-72 220.4L-71.9 180.9L-71.4 178.3L-66 168.1L-66 50L-66 48.7L-71.9 41.7L-76.9 34.1L-80.3 27.3L-82.9 20.1L-85.4 9.3L-86 -1.7L-84.8 -12.7L-81.8 -23.4L-95.3 -35.8L-98 -39.5L-100.5 -44L-102.7 -50.2L-103.8 -56.4L-103.9 -62.6L-103 -68.9L-100.9 -75L-97.8 -80.8L-93.8 -85.9L-88.8 -90.4L-82.8 -94.1L-76.6 -96.5L-69.9 -97.8L-62.8 -97.9L-60.7 -104L-57.5 -109.8L-53.6 -114.9L-48.6 -119.5L-43.2 -123.1L-37 -125.8L-30.6 -127.4L-24.1 -128L-17.7 -127.5L-11.4 -126L-5.5 -123.4L0 -120L4.2 -122.8L8.9 -125L13.9 -126.7L19 -127.7L24.1 -128L29.1 -127.7L34.3 -126.6L39.1 -125L47.3 -120.5L54.3 -114.1L59.5 -106.5L62.8 -97.9L68.4 -97.9L74 -97.1L79.4 -95.6L84.6 -93.1L89.5 -89.9L93.6 -86.1L97.1 -81.8L100 -77L102.4 -70.8L103.8 -64.1L103.9 -57.2L102.7 -50.2L100.2 -43.4L96.2 -36.9L81.8 -23.4L84.5 -14.3L85.8 -4.9L85.8 4.7L84.5 14.1L81.9 23.1L78.3 31.5L72.8 40.4L66 48.7Z"/>
+      <rect id="kit-u-cuff" x="-72" y="170" width="144" height="62" rx="12"/>
+      <path id="kit-u-ribs" d="M-60 179V223M-48 179V223M-36 179V223M-24 179V223M-12 179V223M0 179V223M12 179V223M24 179V223M36 179V223M48 179V223M60 179V223"/>
+      <g id="kit-u-picots"><circle cx="-40" cy="-103.9" r="4.5"/><circle cx="-20" cy="-103.9" r="4.5"/><circle cx="20" cy="-103.9" r="4.5"/><circle cx="40" cy="-103.9" r="4.5"/><circle cx="-30" cy="-86.6" r="4.5"/><circle cx="-10" cy="-86.6" r="4.5"/><circle cx="10" cy="-86.6" r="4.5"/><circle cx="30" cy="-86.6" r="4.5"/><circle cx="-80" cy="-69.3" r="4.5"/><circle cx="-60" cy="-69.3" r="4.5"/><circle cx="60" cy="-69.3" r="4.5"/><circle cx="80" cy="-69.3" r="4.5"/><circle cx="-70" cy="-52" r="4.5"/><circle cx="-10" cy="-52" r="4.5"/><circle cx="10" cy="-52" r="4.5"/><circle cx="70" cy="-52" r="4.5"/><circle cx="-40" cy="-34.6" r="4.5"/><circle cx="-20" cy="-34.6" r="4.5"/><circle cx="0" cy="-34.6" r="4.5"/><circle cx="20" cy="-34.6" r="4.5"/><circle cx="40" cy="-34.6" r="4.5"/><circle cx="-50" cy="-17.3" r="4.5"/><circle cx="-30" cy="-17.3" r="4.5"/><circle cx="-10" cy="-17.3" r="4.5"/><circle cx="10" cy="-17.3" r="4.5"/><circle cx="30" cy="-17.3" r="4.5"/><circle cx="50" cy="-17.3" r="4.5"/><circle cx="-60" cy="0" r="4.5"/><circle cx="-40" cy="0" r="4.5"/><circle cx="-20" cy="0" r="4.5"/><circle cx="0" cy="0" r="4.5"/><circle cx="20" cy="0" r="4.5"/><circle cx="40" cy="0" r="4.5"/><circle cx="60" cy="0" r="4.5"/><circle cx="-50" cy="17.3" r="4.5"/><circle cx="-30" cy="17.3" r="4.5"/><circle cx="-10" cy="17.3" r="4.5"/><circle cx="10" cy="17.3" r="4.5"/><circle cx="30" cy="17.3" r="4.5"/><circle cx="50" cy="17.3" r="4.5"/><circle cx="-40" cy="34.6" r="4.5"/><circle cx="-20" cy="34.6" r="4.5"/><circle cx="0" cy="34.6" r="4.5"/><circle cx="20" cy="34.6" r="4.5"/><circle cx="40" cy="34.6" r="4.5"/></g>
+    </defs>
   </svg>
 
   <a class="skip-link" href="#contenu">Aller au contenu</a>
@@ -354,6 +363,100 @@
           <div class="compare__captions" aria-live="polite">
             <p class="compare__caption" data-state="sans">Sans chaussettes&nbsp;: aucune prise, la patte part en glissade.</p>
             <p class="compare__caption" data-state="avec" hidden>Avec Mistigrip&nbsp;: les picots accrochent, la patte reste en place.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         4 bis. LA CHAUSSETTE EN KIT — panneau aubergine
+         Vue éclatée : chaque pièce rejoint la chaussette au défilement,
+         avec son argument. Défilement natif (rien n'est détourné) ;
+         sans JavaScript ou avec prefers-reduced-motion, tout est monté.
+         ========================================================= -->
+    <section class="kit panel is-dark" id="la-chaussette" aria-labelledby="kit-title">
+      <div class="kit__layout">
+        <div class="kit__head">
+          <h2 class="h2 kit__title-main" id="kit-title" data-motion="glide" data-drift>Comment marche une chaussette <span class="nowrap">anti-dérapante</span>&nbsp;?</h2>
+          <p class="lead kit__lead">Trois pièces, une seule mission&nbsp;: que chaque pas accroche. Voici, pièce par pièce, ce que votre chat aura aux pattes.</p>
+        </div>
+
+        <div class="kit__track">
+          <!-- Vue éclatée en 3D (CSS) : sans mouvement, la chaussette est montée et le lot affiché.
+               Au défilement, main.js écrit --k1 à --k4 (progression de chaque pièce) et --kp. -->
+          <div class="kit__stage" role="img" aria-label="Vue éclatée d’une chaussette Mistigrip : la maille, les picots en silicone et le revers élastique s’assemblent, puis la chaussette rejoint les trois autres du lot.">
+            <div class="kit__view">
+              <div class="kit__model" data-tilt="kit">
+                <div class="kit__floor"></div>
+                <!-- Les trois autres chaussettes du lot, cachées sous la première jusqu’à l’étape 4 -->
+                <div class="kit__extra kit__extra--3">
+                  <svg class="kit__layer kit__edge kit__edge--2" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-full" class="kit__edge-base"/><use href="#kit-u-full" class="kit__edge-shade"/></svg>
+                  <svg class="kit__layer kit__edge kit__edge--1" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-full" class="kit__edge-base"/><use href="#kit-u-full" class="kit__edge-shade"/></svg>
+                  <svg class="kit__layer kit__full" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-body" class="kit__skin"/><use href="#kit-u-body" class="kit__knit"/><use href="#kit-u-cuff" class="kit__cuff"/><use href="#kit-u-ribs" class="kit__ribs"/><use href="#kit-u-picots" class="kit__picots kit__picots--flat"/></svg>
+                </div>
+                <div class="kit__extra kit__extra--2">
+                  <svg class="kit__layer kit__edge kit__edge--2" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-full" class="kit__edge-base"/><use href="#kit-u-full" class="kit__edge-shade"/></svg>
+                  <svg class="kit__layer kit__edge kit__edge--1" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-full" class="kit__edge-base"/><use href="#kit-u-full" class="kit__edge-shade"/></svg>
+                  <svg class="kit__layer kit__full" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-body" class="kit__skin"/><use href="#kit-u-body" class="kit__knit"/><use href="#kit-u-cuff" class="kit__cuff"/><use href="#kit-u-ribs" class="kit__ribs"/><use href="#kit-u-picots" class="kit__picots kit__picots--flat"/></svg>
+                </div>
+                <div class="kit__extra kit__extra--1">
+                  <svg class="kit__layer kit__edge kit__edge--2" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-full" class="kit__edge-base"/><use href="#kit-u-full" class="kit__edge-shade"/></svg>
+                  <svg class="kit__layer kit__edge kit__edge--1" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-full" class="kit__edge-base"/><use href="#kit-u-full" class="kit__edge-shade"/></svg>
+                  <svg class="kit__layer kit__full" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-body" class="kit__skin"/><use href="#kit-u-body" class="kit__knit"/><use href="#kit-u-cuff" class="kit__cuff"/><use href="#kit-u-ribs" class="kit__ribs"/><use href="#kit-u-picots" class="kit__picots kit__picots--flat"/></svg>
+                </div>
+                <!-- La chaussette, pièce par pièce -->
+                <div class="kit__sock">
+                  <svg class="kit__layer kit__ghost" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-body" class="kit__ghost-line"/></svg>
+                  <div class="kit__part kit__part--body">
+                    <svg class="kit__layer kit__edge kit__edge--3" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-body" class="kit__edge-base"/><use href="#kit-u-body" class="kit__edge-shade"/></svg>
+                    <svg class="kit__layer kit__edge kit__edge--2" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-body" class="kit__edge-base"/><use href="#kit-u-body" class="kit__edge-shade"/></svg>
+                    <svg class="kit__layer kit__edge kit__edge--1" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-body" class="kit__edge-base"/><use href="#kit-u-body" class="kit__edge-shade"/></svg>
+                    <svg class="kit__layer kit__fabric" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-body" class="kit__skin"/><use href="#kit-u-body" class="kit__knit"/></svg>
+                  </div>
+                  <svg class="kit__layer kit__part kit__part--picots" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><g class="kit__picots"><circle cx="-40" cy="-103.9" r="4.5" style="--d:134ms"/><circle cx="-20" cy="-103.9" r="4.5" style="--d:119ms"/><circle cx="20" cy="-103.9" r="4.5" style="--d:119ms"/><circle cx="40" cy="-103.9" r="4.5" style="--d:134ms"/><circle cx="-30" cy="-86.6" r="4.5" style="--d:99ms"/><circle cx="-10" cy="-86.6" r="4.5" style="--d:85ms"/><circle cx="10" cy="-86.6" r="4.5" style="--d:85ms"/><circle cx="30" cy="-86.6" r="4.5" style="--d:99ms"/><circle cx="-80" cy="-69.3" r="4.5" style="--d:151ms"/><circle cx="-60" cy="-69.3" r="4.5" style="--d:119ms"/><circle cx="60" cy="-69.3" r="4.5" style="--d:119ms"/><circle cx="80" cy="-69.3" r="4.5" style="--d:151ms"/><circle cx="-70" cy="-52" r="4.5" style="--d:126ms"/><circle cx="-10" cy="-52" r="4.5" style="--d:28ms"/><circle cx="10" cy="-52" r="4.5" style="--d:28ms"/><circle cx="70" cy="-52" r="4.5" style="--d:126ms"/><circle cx="-40" cy="-34.6" r="4.5" style="--d:72ms"/><circle cx="-20" cy="-34.6" r="4.5" style="--d:37ms"/><circle cx="0" cy="-34.6" r="4.5" style="--d:10ms"/><circle cx="20" cy="-34.6" r="4.5" style="--d:37ms"/><circle cx="40" cy="-34.6" r="4.5" style="--d:72ms"/><circle cx="-50" cy="-17.3" r="4.5" style="--d:98ms"/><circle cx="-30" cy="-17.3" r="4.5" style="--d:67ms"/><circle cx="-10" cy="-17.3" r="4.5" style="--d:44ms"/><circle cx="10" cy="-17.3" r="4.5" style="--d:44ms"/><circle cx="30" cy="-17.3" r="4.5" style="--d:67ms"/><circle cx="50" cy="-17.3" r="4.5" style="--d:98ms"/><circle cx="-60" cy="0" r="4.5" style="--d:128ms"/><circle cx="-40" cy="0" r="4.5" style="--d:101ms"/><circle cx="-20" cy="0" r="4.5" style="--d:80ms"/><circle cx="0" cy="0" r="4.5" style="--d:71ms"/><circle cx="20" cy="0" r="4.5" style="--d:80ms"/><circle cx="40" cy="0" r="4.5" style="--d:101ms"/><circle cx="60" cy="0" r="4.5" style="--d:128ms"/><circle cx="-50" cy="17.3" r="4.5" style="--d:135ms"/><circle cx="-30" cy="17.3" r="4.5" style="--d:115ms"/><circle cx="-10" cy="17.3" r="4.5" style="--d:103ms"/><circle cx="10" cy="17.3" r="4.5" style="--d:103ms"/><circle cx="30" cy="17.3" r="4.5" style="--d:115ms"/><circle cx="50" cy="17.3" r="4.5" style="--d:135ms"/><circle cx="-40" cy="34.6" r="4.5" style="--d:150ms"/><circle cx="-20" cy="34.6" r="4.5" style="--d:137ms"/><circle cx="0" cy="34.6" r="4.5" style="--d:133ms"/><circle cx="20" cy="34.6" r="4.5" style="--d:137ms"/><circle cx="40" cy="34.6" r="4.5" style="--d:150ms"/></g></svg>
+                  <div class="kit__part kit__part--cuff">
+                    <svg class="kit__layer kit__edge kit__edge--1" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-cuff" class="kit__edge-base"/><use href="#kit-u-cuff" class="kit__edge-shade"/></svg>
+                    <svg class="kit__layer kit__cuff-art" viewBox="-115 -140 230 380" aria-hidden="true" focusable="false"><use href="#kit-u-cuff" class="kit__cuff"/><use href="#kit-u-ribs" class="kit__ribs"/></svg>
+                  </div>
+                  <span class="kit__guide kit__guide--z" style="--gx:-70;--gy:-102"></span>
+                  <span class="kit__guide kit__guide--z" style="--gx:70;--gy:-102"></span>
+                  <span class="kit__guide kit__guide--z" style="--gx:-40;--gy:-15.4"></span>
+                  <span class="kit__guide kit__guide--z" style="--gx:40;--gy:-15.4"></span>
+                  <span class="kit__guide kit__guide--y" style="--gx:-72"></span>
+                  <span class="kit__guide kit__guide--y" style="--gx:72"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- À VALIDER : composition et arguments de chaque pièce (maille, picots, revers) -->
+          <ol class="kit__steps">
+            <li class="kit__step" data-kit-step>
+              <div class="kit__meta" aria-hidden="true"><span class="kit__num">01</span><span class="kit__meter"><span class="kit__fill"></span><span class="kit__dot"></span></span></div>
+              <h3 class="kit__title">Une maille douce qui épouse la patte</h3>
+              <p class="kit__text">Souple et légère, elle enveloppe la patte sans la serrer et suit chacun de ses mouvements. Elle passe à la machine, comme vos chaussettes.</p>
+            </li>
+            <li class="kit__step" data-kit-step>
+              <div class="kit__meta" aria-hidden="true"><span class="kit__num">02</span><span class="kit__meter"><span class="kit__fill"></span><span class="kit__dot"></span></span></div>
+              <h3 class="kit__title">Des picots en silicone qui accrochent</h3>
+              <p class="kit__text">Répartis sous toute la patte, ils donnent aux coussinets la prise qui leur manque sur le parquet, le carrelage ou le stratifié. Le parquet ne fait plus la loi.</p>
+            </li>
+            <li class="kit__step" data-kit-step>
+              <div class="kit__meta" aria-hidden="true"><span class="kit__num">03</span><span class="kit__meter"><span class="kit__fill"></span><span class="kit__dot"></span></span></div>
+              <h3 class="kit__title">Un revers élastique qui tient en place</h3>
+              <p class="kit__text">Côtelé et souple, il maintient la chaussette sans comprimer la patte. Elle reste où vous l’avez mise, même pendant le sprint du couloir.</p>
+            </li>
+          </ol>
+        </div>
+
+        <div class="kit__step kit__end" data-kit-step>
+          <div class="kit__meta" aria-hidden="true"><span class="kit__num">04</span><span class="kit__meter"><span class="kit__fill"></span><span class="kit__dot"></span></span></div>
+          <h3 class="kit__title">Quatre chaussettes, une par patte</h3>
+          <p class="kit__text">Le lot complet pour équiper votre chat, des pattes avant aux pattes arrière, en taille S, M ou L.</p>
+          <div class="kit__buy">
+            <a class="btn btn--rose btn--primary btn--lg" href="#acheter">Choisir ma taille</a>
+            <!-- À VALIDER : prix -->
+            <p class="kit__price"><span class="price">14,90&nbsp;€</span> le lot de 4</p>
           </div>
         </div>
       </div>
