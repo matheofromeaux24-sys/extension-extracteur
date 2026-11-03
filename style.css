@@ -1952,9 +1952,13 @@ strong { font-weight: 700; }
 @media (max-width: 47.99em) {
   .floors { --floors-fs: min(clamp(3rem, 8vh, 5rem), (100vw - 3rem) / 6.7); }
 }
+/* Même largeur, mêmes marges et mêmes coins arrondis que les autres panneaux */
 .floors__band {
   position: relative;
+  width: min(100% - 2 * var(--gutter), var(--max));
+  margin-inline: auto;
   overflow: hidden;
+  border-radius: var(--radius-panel);
   background: var(--floors-bg, var(--jaune));
 }
 .floors__strip {
@@ -2085,14 +2089,17 @@ strong { font-weight: 700; }
     display: block;
     height: var(--floors-run, 0px);
   }
+  /* Le panneau n'est pas plein écran : juste la hauteur des deux rangées, de leurs
+     légendes et de la barre de progression, figé au milieu de l'écran */
   .has-motion .floors__band {
+    --floors-band-h: calc(2.1 * var(--floors-fs) + 12rem);
     position: sticky;
-    top: var(--bar-h-sm);
-    height: calc(100vh - var(--bar-h-sm));
+    top: max(var(--bar-h-sm), (100vh + var(--bar-h-sm) - var(--floors-band-h)) / 2);
+    height: var(--floors-band-h);
     transition: background-color .6s ease-out; /* fondu doux, même avec les crans de la molette */
   }
   @supports (height: 1svh) {
-    .has-motion .floors__band { height: calc(100svh - var(--bar-h-sm)); }
+    .has-motion .floors__band { top: max(var(--bar-h-sm), (100svh + var(--bar-h-sm) - var(--floors-band-h)) / 2); }
   }
   .has-motion .floors__strip {
     --drift-k: 1.5;
