@@ -612,22 +612,56 @@
     var h = hex.trim().replace('#', '');
     return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
   }
-  // Couleur du panneau : passage en douceur d'une couleur de la charte à la suivante
-  function floorsColor(p) {
-    var stops = motion.floors.colors;
-    var n = stops.length - 1;
-    var x = clamp(p, 0, 1) * n;
-    var i = Math.min(n - 1, Math.floor(x));
-    var t = smoothstep(clamp(x - i, 0, 1));
-    var a = stops[i];
-    var b = stops[i + 1];
-    return 'rgb(' + [0, 1, 2].map(function (c) { return Math.round(a[c] + (b[c] - a[c]) * t); }).join(' ') + ')';
+  function rgbString(c) { return 'rgb(' + c.join(' ') + ')'; }
+  // Couleur du fond : fondu doux de la couleur d'un mot à celle du suivant
+  function floorsColor(fx) {
+    var items = motion.floors.items;
+    var last = items.length - 1;
+    if (fx <= items[0].stop) return rgbString(items[0].color);
+    for (var k = 0; k < last; k++) {
+      var a = items[k];
+      var b = items[k + 1];
+      if (fx <= b.stop) {
+        var span = b.stop - a.stop;
+        var t = span > 0 ? smoothstep(clamp((fx - a.stop) / span, 0, 1)) : 1;
+        return rgbString([0, 1, 2].map(function (c) { return Math.round(a.color[c] + (b.color[c] - a.color[c]) * t); }));
+      }
+    }
+    return rgbString(items[last].color);
   }
 
+  // Place les mots en quinconce sur la bande, mesure le trajet et l'instant de chaque couleur
   function measureFloors() {
     var f = motion.floors;
-    if (!f) return;
-    f.travel = Math.max(0, f.strip.offsetWidth - f.band.clientWidth);
+    if (!f || !f.items.length) return;
+    var fontSize = parseFloat(window.getComputedStyle(f.strip).fontSize) || 16;
+    var padX = parseFloat(window.getComputedStyle(f.bar).left) || 0; // même marge que les panneaux
+    var gap = fontSize * 0.9;
+    var x = [];
+    var w = [];
+    var end = 0;
+    f.items.forEach(function (it, k) {
+      w[k] = it.el.offsetWidth;
+      // Chaque mot chevauche la fin du précédent (qui est sur l’autre rangée)…
+      var pos = k === 0 ? 0 : x[k - 1] + w[k - 1] * 0.8;
+      // … sans jamais toucher celui d'avant, sur la même rangée
+      if (k > 1) pos = Math.max(pos, x[k - 2] + w[k - 2] + gap);
+      x[k] = pos;
+      end = Math.max(end, pos + w[k]);
+    });
+    var bandW = f.band.clientWidth;
+    var stripW = Math.round(end + 2 * padX);
+    if (f.stripW !== stripW) {
+      f.stripW = stripW;
+      f.strip.style.setProperty('--floors-w', String(stripW));
+    }
+    f.travel = Math.max(0, stripW - bandW);
+    f.items.forEach(function (it, k) {
+      var left = Math.round(padX + x[k]);
+      setVar(it, '--x', left);
+      // Un fondu par mot, répartis sur toute la course : la couleur du dernier mot arrive à la fin
+      it.stop = f.travel * k / Math.max(1, f.items.length - 1);
+    });
     var run = Math.round(f.travel); // 1 px vers le bas = 1 px vers la droite
     if (f.run !== run) {
       f.run = run;
@@ -636,19 +670,21 @@
     f.top = docTop(f.el);
     f.h = f.el.offsetHeight;
     f.stickTop = parseFloat(window.getComputedStyle(f.band).top) || 0;
-    f.barW = f.bar ? f.bar.clientWidth : 0;
+    f.barW = f.bar.clientWidth;
   }
 
   function floorsFrame(y, vh) {
     var f = motion.floors;
+    if (!f.items.length) return;
     var top = f.top - y;
     if (top > vh * 1.3 || top + f.h < -vh * 0.3) return; // hors champ
     // 0 quand le panneau se fige, 1 quand le dernier mot est arrivé
     var p = f.run ? clamp((y + f.stickTop - f.top) / f.run, 0, 1) : 0;
-    setVar(f, '--fx', p * f.travel);
+    var fx = p * f.travel;
+    setVar(f, '--fx', fx);
     setVar(f, '--fp', p);
     setVar(f, '--fdot', p * f.barW);
-    var bg = floorsColor(p);
+    var bg = floorsColor(fx);
     if (f.bg !== bg) {
       f.bg = bg;
       f.el.style.setProperty('--floors-bg', bg);
@@ -828,13 +864,13 @@
     if (floorsEl) {
       var tokens = window.getComputedStyle(root);
       motion.floors = {
-        el: floorsEl, cache: {}, top: 0, h: 0, run: -1, stickTop: 0, travel: 0, barW: 0, bg: '',
+        el: floorsEl, cache: {}, top: 0, h: 0, run: -1, stickTop: 0, travel: 0, barW: 0, stripW: -1, bg: '',
         band: $('.floors__band', floorsEl),
         strip: $('.floors__strip', floorsEl),
         bar: $('.floors__progress', floorsEl),
-        // Couleurs de la charte (lues dans style.css) : jaune → pêche → rose → jaune → pêche
-        colors: ['--jaune', '--peche', '--rose', '--jaune', '--peche'].map(function (name) {
-          return hexToRgb(tokens.getPropertyValue(name));
+        // Chaque mot a sa couleur (data-color), lue dans les variables de style.css
+        items: $$('.floors__item', floorsEl).map(function (el) {
+          return { el: el, cache: {}, stop: 0, color: hexToRgb(tokens.getPropertyValue('--' + el.getAttribute('data-color'))) };
         })
       };
     }

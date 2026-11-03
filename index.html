@@ -264,17 +264,26 @@
 
     <!-- =========================================================
          BANDEAU DES SOLS LISSES (décoratif), entre le hero et la section 4.
-         Un grand panneau aux couleurs du site. Arrivé en haut de l'écran, il
-         se fige et le défilement devient horizontal : toute la bande de mots
-         glisse vers la gauche, la couleur du panneau change en douceur au fil
-         des mots, puis le défilement redevient vertical. Défilement natif ;
-         sans mouvement, c'est un bandeau fixe.
+         Façon « page qui défile à l'horizontale » : arrivé en haut de
+         l'écran, le panneau pleine largeur se fige et le défilement fait
+         glisser toute la page vers la droite. Les mots sont posés en
+         quinconce avec une légende ; à chaque mot, le fond passe en fondu
+         à la couleur suivante (data-color). Au dernier mot, le défilement
+         redevient vertical. Défilement natif ; sans mouvement, les mots
+         s'affichent simplement les uns sous les autres.
          ========================================================= -->
     <div class="floors" aria-hidden="true">
       <div class="floors__band">
         <div class="floors__strip" data-drift data-motion-ref=".floors">
-          <p class="floors__row"><span>Parquet ciré</span><span class="floors__picot"></span><span>Carrelage</span><span class="floors__picot"></span><span>Stratifié</span><span class="floors__picot"></span><span>Béton ciré</span><span class="floors__picot"></span><span>Marbre</span></p>
-          <p class="floors__row floors__row--outline"><span>Carrelage</span><span class="floors__picot"></span><span>Vinyle</span><span class="floors__picot"></span><span>Parquet vitrifié</span><span class="floors__picot"></span><span>Tomettes</span><span class="floors__picot"></span><span>Lino</span></p>
+          <p class="floors__item" data-color="jaune"><span class="floors__word">Parquet ciré</span><span class="floors__note">Champion du monde de la glissade.</span></p>
+          <p class="floors__item floors__item--outline" data-color="peche"><span class="floors__word">Carrelage</span><span class="floors__note">Froid, lisse et sans pitié.</span></p>
+          <p class="floors__item" data-color="rose"><span class="floors__word">Stratifié</span><span class="floors__note">Il imite le bois, pas l’adhérence.</span></p>
+          <p class="floors__item floors__item--outline" data-color="jaune"><span class="floors__word">Béton ciré</span><span class="floors__note">Très déco, très glissant.</span></p>
+          <p class="floors__item" data-color="peche"><span class="floors__word">Marbre</span><span class="floors__note">Chic, mais traître.</span></p>
+          <p class="floors__item floors__item--outline" data-color="rose"><span class="floors__word">Vinyle</span><span class="floors__note">Lisse comme un 33&nbsp;tours.</span></p>
+          <p class="floors__item" data-color="jaune"><span class="floors__word">Parquet vitrifié</span><span class="floors__note">Brillant… et casse-cou.</span></p>
+          <p class="floors__item floors__item--outline" data-color="peche"><span class="floors__word">Tomettes</span><span class="floors__note">Patinées par les années.</span></p>
+          <p class="floors__item" data-color="creme"><span class="floors__word">Lino</span><span class="floors__note">Le toboggan du couloir.</span></p>
         </div>
         <!-- Barre de défilement horizontal : la ligne se remplit, le picot avance -->
         <div class="floors__progress"><span class="floors__progress-fill"></span><span class="floors__progress-dot"></span></div>

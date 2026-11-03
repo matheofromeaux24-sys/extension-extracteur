@@ -1937,68 +1937,80 @@ strong { font-weight: 700; }
    20. BANDEAU DES SOLS, OMBRES DE PICOTS, PICOT VOLANT
    Styles de base, visibles même sans animation.
    ========================================================================== */
-/* Une piste (.floors) qui contient un grand panneau (.floors__band) ;
-   la bande de mots (.floors__strip) y glisse comme une page qui défilerait à l'horizontale */
+/* Bandeau des sols : une piste (.floors) qui contient un panneau pleine largeur
+   (.floors__band) ; la bande de mots (.floors__strip) y défile comme une page
+   qui tournerait à l'horizontale. Sans mouvement : les mots se suivent sur
+   plusieurs lignes, tous visibles. */
 .floors {
-  --floors-fs: clamp(3.25rem, 8vw + 1rem, 10rem);
+  --floors-fs: clamp(3rem, 7vw + 1rem, 9.5rem);
   margin-top: var(--gutter); /* le hero est un panneau : même écart que sur les côtés */
 }
-/* Téléphone en portrait : le panneau est haut et étroit, les mots grandissent avec sa hauteur */
+/* Téléphone : les mots grandissent avec la hauteur de l'écran, sans que le plus long
+   (« Parquet vitrifié », 6,6 em) dépasse la largeur */
 @media (max-width: 47.99em) {
-  /* … sans dépasser la largeur de l'écran : « Parquet vitrifié », le plus long, mesure 6,6 em */
-  .floors { --floors-fs: min(clamp(3rem, 9vh, 5.5rem), (100vw - 2 * var(--gutter)) / 6.8); }
+  .floors { --floors-fs: min(clamp(3rem, 8vh, 5rem), (100vw - 3rem) / 6.7); }
 }
 .floors__band {
   position: relative;
-  width: min(100% - 2 * var(--gutter), var(--max));
-  margin-inline: auto;
-  padding-block: clamp(2.5rem, 6vw, 4.5rem);
   overflow: hidden;
-  border-radius: var(--radius-panel);
   background: var(--floors-bg, var(--jaune));
 }
 .floors__strip {
   position: relative;
   isolation: isolate;
-  width: max-content;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.75rem clamp(2rem, 5vw, 4.5rem);
+  padding: clamp(2.5rem, 6vw, 4.5rem) var(--pad-x);
+  font-size: var(--floors-fs);
 }
 /* Trame de picots portée par la bande : elle glisse avec les mots */
 .floors__strip::before {
   content: "";
   position: absolute;
-  inset: -60vh 0;
+  inset: 0;
   z-index: -1;
   background-color: var(--aubergine);
   opacity: .08;
   -webkit-mask: var(--dots) 0 0 / var(--dots-size) var(--dots-size) repeat;
   mask: var(--dots) 0 0 / var(--dots-size) var(--dots-size) repeat;
 }
-.floors__row {
+.floors__item {
   display: flex;
-  align-items: center;
-  gap: .32em;
-  width: max-content;
+  flex-direction: column;
+  gap: .625rem;
   margin: 0;
-  /* Premier et dernier mot alignés sur la marge intérieure des panneaux */
-  padding-inline: var(--pad-x);
+}
+.floors__word {
   font-family: var(--font-display);
-  font-size: var(--floors-fs);
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.05;
   letter-spacing: -.02em;
   white-space: nowrap;
 }
-.floors__row--outline {
+.floors__item--outline .floors__word {
   color: transparent;
   -webkit-text-stroke: max(1.5px, .018em) var(--aubergine);
 }
-.floors__picot {
+/* Légende : un picot, une phrase (comme les légendes des photos d'un magazine) */
+.floors__note {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.floors__note::before {
+  content: "";
   flex: none;
-  width: .2em;
-  height: .2em;
+  width: .75rem;
+  height: .75rem;
   border-radius: 50%;
-  background: var(--creme); /* reste visible quelle que soit la couleur du panneau */
-  box-shadow: 0 0 0 max(2px, .035em) var(--aubergine);
+  background: var(--creme);
+  box-shadow: 0 0 0 2px var(--aubergine);
 }
 .floors__progress { display: none; } /* uniquement pendant le défilement horizontal */
 
@@ -2057,11 +2069,12 @@ strong { font-weight: 700; }
   .has-motion .steps__num { --drift-k: 1.4; }
   .has-motion .footer__mark { --drift-k: 1.6; }
 
-  /* Bandeau des sols : arrivé en haut de l'écran, le panneau se fige et le
-     défilement devient horizontal (toute la bande glisse vers la gauche, la
-     couleur du panneau change en douceur au fil des mots) ; au dernier mot,
-     le défilement redevient vertical. main.js écrit --fx, --fp, --fdot,
-     --floors-bg et la longueur de la piste --floors-run. */
+  /* Bandeau des sols : arrivé en haut de l'écran, le panneau pleine largeur
+     se fige et le défilement fait glisser toute la page vers la droite ; à
+     chaque mot, le fond passe en fondu à la couleur suivante ; au dernier mot,
+     le défilement redevient vertical. main.js place les mots (--x), règle la
+     largeur de la bande (--floors-w), la longueur de la piste (--floors-run),
+     le décalage (--fx), la progression (--fp, --fdot) et la couleur (--floors-bg). */
   .has-motion .floors::after {
     content: "";
     display: block;
@@ -2069,27 +2082,36 @@ strong { font-weight: 700; }
   }
   .has-motion .floors__band {
     position: sticky;
-    top: calc(var(--bar-h-sm) + var(--gutter));
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    height: calc(100vh - var(--bar-h-sm) - 2 * var(--gutter));
-    padding-block: 0;
-    transition: background-color .6s ease-out; /* lisse les crans de la molette */
+    top: var(--bar-h-sm);
+    height: calc(100vh - var(--bar-h-sm));
+    transition: background-color .6s ease-out; /* fondu doux, même avec les crans de la molette */
   }
   @supports (height: 1svh) {
-    .has-motion .floors__band { height: calc(100svh - var(--bar-h-sm) - 2 * var(--gutter)); }
+    .has-motion .floors__band { height: calc(100svh - var(--bar-h-sm)); }
   }
   .has-motion .floors__strip {
     --drift-k: 1.5;
+    display: block;
+    width: calc(var(--floors-w, 0) * 1px);
+    height: 100%;
+    padding: 0;
     translate: calc(var(--fx, 0) * -1px) 0;
     will-change: translate, transform;
+  }
+  /* En quinconce : un mot en haut, le suivant en bas */
+  .has-motion .floors__item { position: absolute; left: calc(var(--x, 0) * 1px); }
+  .has-motion .floors__item:nth-child(odd) { top: clamp(1.5rem, 9vh, 6.5rem); }
+  .has-motion .floors__item:nth-child(even) { bottom: clamp(4.5rem, 13vh, 9rem); }
+  /* Téléphone en portrait : les deux rangées se rapprochent du centre de l'écran */
+  @media (max-width: 47.99em) and (min-aspect-ratio: 1 / 10) and (max-aspect-ratio: 3 / 4) {
+    .has-motion .floors__item:nth-child(odd) { top: 22%; }
+    .has-motion .floors__item:nth-child(even) { bottom: 26%; }
   }
   .has-motion .floors__progress {
     display: block;
     position: absolute;
     right: var(--pad-x);
-    bottom: clamp(1.5rem, 4vw, 3rem);
+    bottom: clamp(1.5rem, 4vh, 3rem);
     left: var(--pad-x);
     height: 2px;
     background: var(--aubergine-12);
