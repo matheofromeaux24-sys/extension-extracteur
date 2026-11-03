@@ -29,7 +29,7 @@
   var desktop = window.matchMedia('(min-width: 64em)');
   var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   var motion = {
-    on: false, ready: false, items: [], tilts: [], hero: null, kit: null, raf: 0,
+    on: false, ready: false, items: [], tilts: [], hero: null, kit: null, floors: null, raf: 0,
     lastY: 0, lastScrollAt: 0, vh: window.innerHeight, maxScroll: 0,
     spring: { x: 0, v: 0 }
   };
@@ -594,6 +594,7 @@
 
   function measureMotion() {
     motion.vh = window.innerHeight;
+    measureFloors(); // d'abord : la longueur de sa piste décale tout ce qui suit
     motion.maxScroll = Math.max(0, root.scrollHeight - motion.vh);
     motion.items.forEach(function (item) {
       item.top = docTop(item.ref);
@@ -601,6 +602,34 @@
     });
     if (motion.hero) motion.hero.h = motion.hero.el.offsetHeight;
     measureKit();
+  }
+
+  /* Bandeau des sols : sa piste est aussi longue que le trajet horizontal
+     des mots. Pendant qu'on la parcourt, le bandeau reste figé au milieu de
+     l'écran et les rangées glissent en sens contraire jusqu'au dernier mot. */
+  function measureFloors() {
+    var f = motion.floors;
+    if (!f) return;
+    var width = f.band.clientWidth;
+    f.travel = f.rows.map(function (row) { return Math.max(0, row.offsetWidth - width); });
+    var run = Math.round(Math.max.apply(null, f.travel) * 0.9);
+    if (f.run !== run) {
+      f.run = run;
+      f.el.style.setProperty('--floors-run', run + 'px');
+    }
+    f.top = docTop(f.el);
+    f.h = f.el.offsetHeight;
+    f.stickTop = parseFloat(window.getComputedStyle(f.band).top) || 0;
+  }
+
+  function floorsFrame(y, vh) {
+    var f = motion.floors;
+    var top = f.top - y;
+    if (top > vh * 1.3 || top + f.h < -vh * 0.3) return; // hors champ
+    // 0 quand le bandeau se fige, 1 quand le dernier mot est arrivé
+    var p = f.run ? clamp((y + f.stickTop - f.top) / f.run, 0, 1) : 0;
+    setVar(f, '--x1', -p * f.travel[0]);         // fin de la 1re rangée : elle part vers la gauche
+    setVar(f, '--x2', -(1 - p) * f.travel[1]);   // 2e rangée : elle part de sa fin, vers la droite
   }
 
   /* La chaussette en kit : chaque pièce suit la position de son texte.
@@ -690,7 +719,6 @@
       if (item.glide) setVar(item, '--g', grip(enter));
       if (item.rise) setVar(item, '--s', smoothstep(enter));
       if (item.parallax) setVar(item, '--c', clamp((top + item.h / 2 - vh / 2) / (vh / 2 + item.h / 2), -1, 1));
-      if (item.floors) setVar(item, '--m', clamp((vh - top) / (vh + item.h), 0, 1));
       if (item.stagger) {
         var count = item.children.length;
         var step = 0.7 / Math.max(1, count - 1);
@@ -703,6 +731,7 @@
     });
 
     if (motion.kit) kitFrame(y, vh);
+    if (motion.floors) floorsFrame(y, vh);
 
     // Hero : progression de sortie (l'accroche glisse, la photo se décolle)
     var heroProgress = 0;
@@ -745,7 +774,6 @@
         glide: is('glide'),
         rise: is('rise') || is('scene'),
         parallax: is('parallax'),
-        floors: is('floors'),
         stagger: is('stagger'),
         reverse: el.getAttribute('data-stagger') === 'reverse',
         drift: el.hasAttribute('data-drift'),
@@ -755,6 +783,15 @@
 
     var heroEl = $('[data-motion="hero"]');
     if (heroEl) motion.hero = { el: heroEl, cache: {}, h: 0 };
+
+    var floorsEl = $('.floors');
+    if (floorsEl) {
+      motion.floors = {
+        el: floorsEl, cache: {}, top: 0, h: 0, run: -1, stickTop: 0, travel: [0, 0],
+        band: $('.floors__band', floorsEl),
+        rows: $$('.floors__row', floorsEl)
+      };
+    }
 
     var kitEl = $('.kit');
     var kitStage = kitEl && $('.kit__stage', kitEl);

@@ -1933,8 +1933,12 @@ strong { font-weight: 700; }
    20. BANDEAU DES SOLS, OMBRES DE PICOTS, PICOT VOLANT
    Styles de base, visibles même sans animation.
    ========================================================================== */
+/* Une piste (.floors, pleine largeur) qui contient le bandeau (.floors__band) */
 .floors {
-  margin: 0 calc(50% - 50vw) clamp(3.5rem, 8vw, 7rem);
+  --floors-fs: clamp(2.75rem, 7vw + 1rem, 8rem);
+  margin: clamp(3.5rem, 8vw, 7rem) calc(50% - 50vw) 0;
+}
+.floors__band {
   padding-block: .25rem;
   overflow: hidden;
 }
@@ -1944,9 +1948,10 @@ strong { font-weight: 700; }
   gap: .32em;
   width: max-content;
   margin: 0;
-  padding-inline: .3em;
+  /* Premier et dernier mot alignés sur les marges du contenu de la page */
+  padding-inline: calc((100% - var(--content-w)) / 2);
   font-family: var(--font-display);
-  font-size: clamp(2.75rem, 7vw + 1rem, 8rem);
+  font-size: var(--floors-fs);
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -.02em;
@@ -2005,7 +2010,7 @@ strong { font-weight: 700; }
 /* ==========================================================================
    21. MOUVEMENT AU DÉFILEMENT ET 3D
    Le défilement reste natif : main.js lit sa position et sa vitesse et écrit
-   des variables (--g, --s, --c, --m, --x, --dx, --rx, --ry, --wg…).
+   des variables (--g, --s, --c, --x, --x1, --x2, --dx, --rx, --ry, --wg…).
    Leur valeur par défaut correspond à l'état final : sans JavaScript ou avec
    prefers-reduced-motion, tout est simplement à sa place.
    ========================================================================== */
@@ -2021,9 +2026,23 @@ strong { font-weight: 700; }
   .has-motion .steps__num { --drift-k: 1.4; }
   .has-motion .footer__mark { --drift-k: 1.6; }
 
-  /* Bandeau des sols : les deux rangées glissent en sens contraire */
-  .has-motion .floors__row { translate: calc(var(--m, .5) * -32%) 0; }
-  .has-motion .floors__row--outline { translate: calc(-32% + var(--m, .5) * 32%) 0; }
+  /* Bandeau des sols : il se fige au milieu de l'écran, et le défilement fait
+     glisser les deux rangées à l'horizontale, en sens contraire, jusqu'au
+     dernier mot. main.js écrit --x1, --x2 et la longueur de piste --floors-run. */
+  .has-motion .floors::after {
+    content: "";
+    display: block;
+    height: var(--floors-run, 0px);
+  }
+  .has-motion .floors__band {
+    position: sticky;
+    top: calc((100vh + var(--bar-h-sm)) / 2 - 1.1 * var(--floors-fs) - .25rem);
+  }
+  @supports (height: 1svh) {
+    .has-motion .floors__band { top: calc((100svh + var(--bar-h-sm)) / 2 - 1.1 * var(--floors-fs) - .25rem); }
+  }
+  .has-motion .floors__row { translate: calc(var(--x1, 0) * 1px) 0; }
+  .has-motion .floors__row--outline { translate: calc(var(--x2, 0) * 1px) 0; }
 
   /* Glissade d'entrée : glisse, dépasse un peu, s'arrête net */
   .has-motion [data-motion~="glide"] { translate: calc((1 - var(--g, 1)) * -28vw) 0; }

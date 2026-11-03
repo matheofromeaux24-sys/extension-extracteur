@@ -263,15 +263,22 @@
     </section>
 
     <!-- =========================================================
+         BANDEAU DES SOLS LISSES (décoratif), entre le hero et la section 4.
+         Arrivé au milieu de l'écran, il se fige : le défilement fait alors
+         glisser les mots à l'horizontale, jusqu'au dernier, puis la page
+         reprend. Défilement natif ; sans mouvement, le bandeau reste fixe.
+         ========================================================= -->
+    <div class="floors" aria-hidden="true">
+      <div class="floors__band">
+        <p class="floors__row" data-drift><span>Parquet ciré</span><span class="floors__picot"></span><span>Carrelage</span><span class="floors__picot"></span><span>Stratifié</span><span class="floors__picot"></span><span>Béton ciré</span><span class="floors__picot"></span><span>Marbre</span></p>
+        <p class="floors__row floors__row--outline" data-drift><span>Carrelage</span><span class="floors__picot"></span><span>Vinyle</span><span class="floors__picot"></span><span>Parquet vitrifié</span><span class="floors__picot"></span><span>Tomettes</span><span class="floors__picot"></span><span>Lino</span></p>
+      </div>
+    </div>
+
+    <!-- =========================================================
          4. PROBLÈME ET SOLUTION — fond crème
          ========================================================= -->
     <section class="section problem" id="comment-ca-marche" aria-labelledby="problem-title">
-      <!-- Bandeau des sols lisses : il glisse avec le défilement, jamais tout seul (décoratif) -->
-      <div class="floors" aria-hidden="true" data-motion="floors">
-        <p class="floors__row" data-drift><span>Parquet ciré</span><span class="floors__picot"></span><span>Carrelage</span><span class="floors__picot"></span><span>Stratifié</span><span class="floors__picot"></span><span>Béton ciré</span><span class="floors__picot"></span><span>Marbre</span><span class="floors__picot"></span><span>Parquet ciré</span><span class="floors__picot"></span><span>Carrelage</span><span class="floors__picot"></span><span>Stratifié</span><span class="floors__picot"></span></p>
-        <p class="floors__row floors__row--outline" data-drift><span>Vinyle</span><span class="floors__picot"></span><span>Parquet vitrifié</span><span class="floors__picot"></span><span>Tomettes</span><span class="floors__picot"></span><span>Lino</span><span class="floors__picot"></span><span>Carrelage</span><span class="floors__picot"></span><span>Vinyle</span><span class="floors__picot"></span><span>Parquet vitrifié</span><span class="floors__picot"></span><span>Tomettes</span><span class="floors__picot"></span></p>
-      </div>
-
       <div class="problem__grid">
         <h2 class="h2 problem__title" id="problem-title" data-motion="glide" data-motion-ref=".problem__grid" data-drift>Pourquoi votre chat glisse sur le parquet&nbsp;?</h2>
 
