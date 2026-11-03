@@ -3,6 +3,8 @@
    JavaScript natif, sans dépendance. Aucun texte n'est injecté :
    tout le contenu est dans le HTML, le script ne fait qu'afficher, masquer
    et mettre à jour des chiffres (quantités, prix).
+   Mouvement au défilement et 3D : section 11. Le défilement reste natif,
+   et tout est coupé si l'utilisateur demande à réduire les animations.
    ========================================================================== */
 (function () {
   'use strict';
@@ -15,7 +17,7 @@
   var MAX_QTY = 10;
   var SIZES = ['S', 'M', 'L'];
   var STORAGE_KEY = 'mistigrip-panier-v1';
-  var CART_OPEN_DELAY = 600;       // laisse voir « Ajouté » et le rebond du compteur
+  var CART_OPEN_DELAY = 900;       // laisse voir « Ajouté », le picot volant et le rebond du compteur
 
   /* ------------------------------------------------------------------------
      Outils
@@ -24,6 +26,13 @@
   var $$ = function (sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); };
   var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   var desktop = window.matchMedia('(min-width: 64em)');
+  var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+  var motion = {
+    on: false, ready: false, items: [], tilts: [], hero: null, raf: 0,
+    lastY: 0, lastScrollAt: 0, vh: window.innerHeight, maxScroll: 0,
+    spring: { x: 0, v: 0 }
+  };
+  var motionOn = function () { return motion.on; };
   var money = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
   var formatCents = function (cents) { return money.format(cents / 100); };
   var clampQty = function (value) {
@@ -196,11 +205,33 @@
      ======================================================================== */
   var thumbs = $$('.thumb');
   var slides = $$('.gallery__slide');
+  var flipTimer = null;
+  function showSlide(next) {
+    slides.forEach(function (slide) {
+      slide.hidden = slide !== next;
+      slide.classList.remove('is-flip-out', 'is-flip-in');
+    });
+  }
   thumbs.forEach(function (thumb) {
     thumb.addEventListener('click', function () {
-      var target = thumb.getAttribute('aria-controls');
-      slides.forEach(function (slide) { slide.hidden = slide.id !== target; });
+      var next = document.getElementById(thumb.getAttribute('aria-controls'));
+      var current = slides.filter(function (slide) { return !slide.hidden; })[0];
       thumbs.forEach(function (t) { t.setAttribute('aria-pressed', String(t === thumb)); });
+      window.clearTimeout(flipTimer);
+      if (!next) return;
+      if (next === current || !current || !motionOn()) {
+        showSlide(next);
+        return;
+      }
+      // Avec le mouvement : la photo pivote, change à mi-course, puis accroche
+      current.classList.remove('is-flip-in', 'is-flip-out');
+      void current.offsetWidth; // relance l'animation
+      current.classList.add('is-flip-out');
+      flipTimer = window.setTimeout(function () {
+        showSlide(next);
+        next.classList.add('is-flip-in');
+        flipTimer = window.setTimeout(function () { next.classList.remove('is-flip-in'); }, 520);
+      }, 200);
     });
   });
 
@@ -267,12 +298,16 @@
     return SIZES.reduce(function (sum, size) { return sum + cart[size]; }, 0);
   }
 
-  function renderCart() {
+  function updateCount(count) {
+    countEls.forEach(function (el) { el.textContent = String(count); });
+  }
+
+  function renderCart(options) {
     var count = totalCount();
     var subtotal = count * PRICE_CENTS;
     var remaining = Math.max(0, FREE_SHIPPING_CENTS - subtotal);
 
-    countEls.forEach(function (el) { el.textContent = String(count); });
+    if (!(options && options.deferCount)) updateCount(count);
 
     lines.forEach(function (line) {
       var size = line.getAttribute('data-size');
@@ -402,6 +437,44 @@
     badge.addEventListener('animationend', function () { badge.classList.remove('is-bumping'); });
   });
 
+  /* Un picot vole du bouton jusqu'au compteur du panier, en cloche.
+     Élément purement décoratif, sans texte, retiré à l'arrivée. */
+  function flyToCart(from, onArrive) {
+    var badge = $('.cart-btn__count');
+    if (!motionOn() || !badge || !from.animate) {
+      onArrive();
+      return;
+    }
+    var a = from.getBoundingClientRect();
+    var b = badge.getBoundingClientRect();
+    var x0 = a.left + a.width / 2;
+    var y0 = a.top + a.height / 2;
+    var x1 = b.left + b.width / 2;
+    var y1 = b.top + b.height / 2;
+    var peak = Math.min(y0, y1) - Math.min(160, Math.abs(y0 - y1) * 0.35 + 60);
+    var flyer = document.createElement('span');
+    var dot = document.createElement('span');
+    flyer.className = 'fly-picot';
+    dot.className = 'fly-picot__dot';
+    flyer.setAttribute('aria-hidden', 'true');
+    flyer.appendChild(dot);
+    document.body.appendChild(flyer);
+    // L'axe horizontal avance régulièrement, l'axe vertical monte puis retombe
+    flyer.animate(
+      [{ transform: 'translateX(' + x0 + 'px)' }, { transform: 'translateX(' + x1 + 'px)' }],
+      { duration: 700, easing: 'cubic-bezier(.4, 0, .6, 1)', fill: 'forwards' }
+    );
+    var fall = dot.animate([
+      { transform: 'translateY(' + y0 + 'px) scale(.5)', easing: 'cubic-bezier(.2, .7, .4, 1)' },
+      { transform: 'translateY(' + peak + 'px) scale(1.25)', offset: 0.4, easing: 'cubic-bezier(.6, 0, .8, .4)' },
+      { transform: 'translateY(' + y1 + 'px) scale(.7)' }
+    ], { duration: 700, fill: 'forwards' });
+    fall.onfinish = function () {
+      flyer.remove();
+      onArrive();
+    };
+  }
+
   if (buyForm && addBtn) {
     buyForm.addEventListener('submit', function (event) {
       event.preventDefault();
@@ -415,12 +488,16 @@
       var qty = clampQty(qtyInput ? qtyInput.value : 1);
       cart[size] = Math.min(MAX_QTY, cart[size] + qty);
       saveCart();
-      renderCart();
+      // Avec le mouvement, le compteur change à l'arrivée du picot volant
+      renderCart({ deferCount: motionOn() });
 
       addBtn.classList.add('is-added');
       window.clearTimeout(addedTimer);
       addedTimer = window.setTimeout(function () { addBtn.classList.remove('is-added'); }, 1500);
-      bumpCounter();
+      flyToCart(addBtn, function () {
+        updateCount(totalCount());
+        bumpCounter();
+      });
 
       window.setTimeout(function () { openCart(addBtn); }, reducedMotion.matches ? 0 : CART_OPEN_DELAY);
     });
@@ -484,4 +561,200 @@
       newsletter.reset();
     });
   }
+
+  /* ========================================================================
+     11. MOUVEMENT AU DÉFILEMENT ET 3D
+     Le défilement reste natif (jamais détourné) : à chaque image, on lit sa
+     position et sa vitesse, puis on écrit des variables CSS que les transform
+     utilisent (style.css, section 21). Rien ne bouge tout seul : tout suit le
+     défilement ou le pointeur. Coupé net avec prefers-reduced-motion.
+     ======================================================================== */
+  function clamp(value, min, max) { return value < min ? min : value > max ? max : value; }
+  function smoothstep(t) { return t * t * (3 - 2 * t); }
+  // Courbe « ça glisse… puis ça accroche » : dépasse sa cible de 2 % environ, puis revient
+  function grip(t) { var u = t - 1; return 1 + 1.8 * u * u * u + 0.8 * u * u; }
+  // Position dans la page sans tenir compte des transform déjà appliqués
+  function docTop(el) {
+    var y = 0;
+    while (el) { y += el.offsetTop; el = el.offsetParent; }
+    return y;
+  }
+  // N'écrit la variable que si sa valeur a changé (moins de recalculs de style)
+  function setVar(target, name, value) {
+    var v = Math.round(value * 1000) / 1000;
+    if (target.cache[name] !== v) {
+      target.cache[name] = v;
+      target.el.style.setProperty(name, String(v));
+    }
+  }
+
+  function measureMotion() {
+    motion.vh = window.innerHeight;
+    motion.maxScroll = Math.max(0, root.scrollHeight - motion.vh);
+    motion.items.forEach(function (item) {
+      item.top = docTop(item.ref);
+      item.h = item.ref.offsetHeight;
+    });
+    if (motion.hero) motion.hero.h = motion.hero.el.offsetHeight;
+  }
+
+  function requestMotionFrame() {
+    if (motion.on && !motion.raf) motion.raf = window.requestAnimationFrame(motionFrame);
+  }
+
+  function motionFrame(now) {
+    motion.raf = 0;
+    var y = window.scrollY;
+    var vh = motion.vh;
+    var spring = motion.spring;
+    var delta = y - motion.lastY;
+    motion.lastY = y;
+
+    // Ressort amorti : la vitesse fait glisser, l'arrêt fait accrocher avec un petit rebond
+    spring.v = (spring.v + (clamp(delta * 0.8, -30, 30) - spring.x) * 0.09) * 0.76;
+    spring.x += spring.v;
+    var settled = now - motion.lastScrollAt > 150 && Math.abs(spring.x) < 0.05 && Math.abs(spring.v) < 0.05;
+    if (settled) {
+      spring.x = 0;
+      spring.v = 0;
+    }
+
+    motion.items.forEach(function (item) {
+      var top = item.top - y;
+      if (top > vh * 1.3 || top + item.h < -vh * 0.3) return; // hors champ : rien à écrire
+      // Entrée : 0 quand l'élément arrive en bas de l'écran, 1 quand il est installé
+      // (toujours atteignable, même pour les éléments tout en bas de la page)
+      var end = Math.max(vh * (1 - item.span), item.top - motion.maxScroll + 2);
+      var enter = clamp((vh - top) / Math.max(1, vh - end), 0, 1);
+      if (item.glide) setVar(item, '--g', grip(enter));
+      if (item.rise) setVar(item, '--s', smoothstep(enter));
+      if (item.parallax) setVar(item, '--c', clamp((top + item.h / 2 - vh / 2) / (vh / 2 + item.h / 2), -1, 1));
+      if (item.floors) setVar(item, '--m', clamp((vh - top) / (vh + item.h), 0, 1));
+      if (item.stagger) {
+        var count = item.children.length;
+        var step = 0.7 / Math.max(1, count - 1);
+        item.children.forEach(function (child, i) {
+          var rank = item.reverse ? count - 1 - i : i; // à l'envers : les lettres s'écartent au lieu de se chevaucher
+          setVar(child, '--wg', grip(clamp(enter * 1.7 - rank * step, 0, 1)));
+        });
+      }
+      if (item.drift) setVar(item, '--dx', spring.x);
+    });
+
+    // Hero : progression de sortie (l'accroche glisse, la photo se décolle)
+    var heroProgress = 0;
+    if (motion.hero) {
+      heroProgress = clamp(y / Math.max(1, motion.hero.h), 0, 1);
+      setVar(motion.hero, '--x', heroProgress);
+    }
+
+    // Cartes 3D : on rejoint doucement l'inclinaison visée par le pointeur
+    var tiltsSettled = true;
+    motion.tilts.forEach(function (tilt) {
+      tilt.rx += (tilt.tx - tilt.rx) * 0.1;
+      tilt.ry += (tilt.ty - tilt.ry) * 0.1;
+      if (Math.abs(tilt.tx - tilt.rx) > 0.02 || Math.abs(tilt.ty - tilt.ry) > 0.02) tiltsSettled = false;
+      var lift = tilt.isHero ? heroProgress : 0;
+      setVar(tilt, '--rx', tilt.rx + lift * 12);
+      setVar(tilt, '--ry', tilt.ry);
+      setVar(tilt, '--lift', lift * 36);
+    });
+
+    // La boucle s'arrête d'elle-même quand tout est immobile
+    if (!settled || !tiltsSettled) requestMotionFrame();
+  }
+
+  function setupMotion() {
+    motion.ready = true;
+    motion.items = $$('[data-motion], [data-drift]').filter(function (el) {
+      return el.getAttribute('data-motion') !== 'hero';
+    }).map(function (el) {
+      var types = (el.getAttribute('data-motion') || '').split(' ');
+      var is = function (type) { return types.indexOf(type) !== -1; };
+      var refSelector = el.getAttribute('data-motion-ref'); // évite de mesurer un élément sticky
+      return {
+        el: el,
+        cache: {},
+        ref: (refSelector && el.closest(refSelector)) || el,
+        top: 0,
+        h: 0,
+        span: is('stagger') ? 0.9 : is('rise') ? 0.55 : 0.6,
+        glide: is('glide'),
+        rise: is('rise') || is('scene'),
+        parallax: is('parallax'),
+        floors: is('floors'),
+        stagger: is('stagger'),
+        reverse: el.getAttribute('data-stagger') === 'reverse',
+        drift: el.hasAttribute('data-drift'),
+        children: is('stagger') ? $$('.final__line, .l', el).map(function (child) { return { el: child, cache: {} }; }) : []
+      };
+    });
+
+    var heroEl = $('[data-motion="hero"]');
+    if (heroEl) motion.hero = { el: heroEl, cache: {}, h: 0 };
+
+    // Inclinaison au pointeur (souris uniquement : rien au doigt)
+    motion.tilts = $$('[data-tilt]').map(function (el) {
+      var tilt = { el: el, cache: {}, rx: 0, ry: 0, tx: 0, ty: 0, isHero: el.getAttribute('data-tilt') === 'hero' };
+      var area = el.parentElement;
+      if (finePointer.matches) {
+        area.addEventListener('pointermove', function (event) {
+          var r = area.getBoundingClientRect();
+          tilt.ty = clamp((event.clientX - r.left) / r.width - 0.5, -0.5, 0.5) * 18;
+          tilt.tx = clamp(0.5 - (event.clientY - r.top) / r.height, -0.5, 0.5) * 14;
+          requestMotionFrame();
+        });
+        area.addEventListener('pointerleave', function () {
+          tilt.tx = 0;
+          tilt.ty = 0;
+          requestMotionFrame();
+        });
+      }
+      return tilt;
+    });
+
+    window.addEventListener('scroll', function () {
+      motion.lastScrollAt = window.performance.now();
+      requestMotionFrame();
+    }, { passive: true });
+
+    // Les positions changent avec la mise en page : polices, redimensionnement, FAQ ouverte…
+    var remeasure = function () {
+      if (!motion.on) return;
+      measureMotion();
+      requestMotionFrame();
+    };
+    var resizeTimer = null;
+    window.addEventListener('resize', function () {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(remeasure, 120);
+    });
+    window.addEventListener('load', remeasure);
+    if ('ResizeObserver' in window) new ResizeObserver(remeasure).observe(document.body);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
+  }
+
+  function startMotion() {
+    if (motion.on || reducedMotion.matches) return;
+    motion.on = true;
+    root.classList.add('has-motion');
+    if (!motion.ready) setupMotion();
+    measureMotion();
+    motion.lastY = window.scrollY;
+    requestMotionFrame();
+  }
+
+  function stopMotion() {
+    motion.on = false;
+    root.classList.remove('has-motion');
+    if (motion.raf) {
+      window.cancelAnimationFrame(motion.raf);
+      motion.raf = 0;
+    }
+  }
+
+  startMotion();
+  reducedMotion.addEventListener('change', function (event) {
+    if (event.matches) stopMotion(); else startMotion();
+  });
 })();

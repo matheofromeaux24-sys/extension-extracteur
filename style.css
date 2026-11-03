@@ -1,6 +1,8 @@
 /* ==========================================================================
    Mistigrip — style.css
    Concept : « ça glisse… puis ça accroche ».
+   Mouvement : chargement du hero et réponses aux actions (section 19),
+   défilement et 3D (section 21). Tout est coupé avec prefers-reduced-motion.
    Mobile first. Points de rupture : 48em (768 px), 64em (1024 px).
    Aucune priorité forcée, aucun dégradé, aucune couleur hors charte.
    ========================================================================== */
@@ -56,6 +58,8 @@
   /* Signature : trame de picots (masque SVG, teinte pilotée par les tokens) */
   --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='6' cy='6' r='2.5'/%3E%3Ccircle cx='18' cy='18' r='2.5'/%3E%3C/svg%3E");
   --dots-size: 24px;
+  /* Même trame, encre aubergine (texte rempli de picots) */
+  --dots-ink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cg fill='%233D2A3A'%3E%3Ccircle cx='6' cy='6' r='3.2'/%3E%3Ccircle cx='18' cy='18' r='3.2'/%3E%3C/g%3E%3C/svg%3E");
 
   /* Mouvement */
   --lift: 4px 4px 0 var(--aubergine);
@@ -1795,9 +1799,9 @@ strong { font-weight: 700; }
 
 
 /* ==========================================================================
-   19. MOUVEMENT
-   Tout est déclaré ici, uniquement si l'utilisateur n'a pas demandé
-   à réduire les animations. Sinon : états finaux immédiats.
+   19. MOUVEMENT : CHARGEMENT ET RÉPONSES AUX ACTIONS
+   Déclaré uniquement si l'utilisateur n'a pas demandé à réduire les
+   animations. Sinon : états finaux immédiats.
    ========================================================================== */
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
@@ -1920,5 +1924,230 @@ strong { font-weight: 700; }
     0% { transform: scale(0); }
     70% { transform: scale(1.12); }
     100% { transform: scale(1); }
+  }
+}
+
+
+/* ==========================================================================
+   20. BANDEAU DES SOLS, OMBRES DE PICOTS, PICOT VOLANT
+   Styles de base, visibles même sans animation.
+   ========================================================================== */
+.floors {
+  margin: 0 calc(50% - 50vw) clamp(3.5rem, 8vw, 7rem);
+  padding-block: .25rem;
+  overflow: hidden;
+}
+.floors__row {
+  display: flex;
+  align-items: center;
+  gap: .32em;
+  width: max-content;
+  margin: 0;
+  padding-inline: .3em;
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 7vw + 1rem, 8rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+}
+.floors__row--outline {
+  color: transparent;
+  -webkit-text-stroke: max(1.5px, .018em) var(--aubergine);
+}
+.floors__picot {
+  flex: none;
+  width: .2em;
+  height: .2em;
+  border-radius: 50%;
+  background: var(--rose);
+  box-shadow: 0 0 0 max(2px, .035em) var(--aubergine);
+}
+
+/* Chiffres des étapes : une copie en picots décalée derrière, comme l'ombre des photos */
+.steps__num {
+  position: relative;
+  isolation: isolate;
+}
+.steps__num::before {
+  content: attr(data-num);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  color: transparent;
+  background: var(--dots-ink) 0 0 / 12px 12px repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  translate: .08em .08em;
+}
+
+/* Picot qui vole du bouton jusqu'au compteur du panier (créé par main.js) */
+.fly-picot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 130;
+  pointer-events: none;
+}
+.fly-picot__dot {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: -.5625rem 0 0 -.5625rem;
+  border-radius: 50%;
+  background: var(--rose);
+  box-shadow: 0 0 0 3px var(--aubergine);
+}
+
+
+/* ==========================================================================
+   21. MOUVEMENT AU DÉFILEMENT ET 3D
+   Le défilement reste natif : main.js lit sa position et sa vitesse et écrit
+   des variables (--g, --s, --c, --m, --x, --dx, --rx, --ry, --wg…).
+   Leur valeur par défaut correspond à l'état final : sans JavaScript ou avec
+   prefers-reduced-motion, tout est simplement à sa place.
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* Dérapage : la vitesse de défilement fait glisser, l'arrêt fait accrocher */
+  .has-motion [data-drift] {
+    transform:
+      translateX(calc(var(--dx, 0) * var(--drift-k, 1) * 1px))
+      skewX(calc(var(--dx, 0) * var(--drift-k, 1) * -.18deg));
+  }
+  .has-motion .floors__row { --drift-k: 3; will-change: translate, transform; }
+  .has-motion .steps__num { --drift-k: 1.4; }
+  .has-motion .footer__mark { --drift-k: 1.6; }
+
+  /* Bandeau des sols : les deux rangées glissent en sens contraire */
+  .has-motion .floors__row { translate: calc(var(--m, .5) * -32%) 0; }
+  .has-motion .floors__row--outline { translate: calc(-32% + var(--m, .5) * 32%) 0; }
+
+  /* Glissade d'entrée : glisse, dépasse un peu, s'arrête net */
+  .has-motion [data-motion~="glide"] { translate: calc((1 - var(--g, 1)) * -28vw) 0; }
+
+  /* Panneaux pastel qui se redressent en 3D en entrant dans l'écran */
+  .has-motion [data-motion~="rise"] {
+    transform-origin: 50% 80vh;
+    transform:
+      perspective(1600px)
+      rotateX(calc((1 - var(--s, 1)) * 8deg))
+      scale(calc(1 - (1 - var(--s, 1)) * .05));
+  }
+
+  /* Hero : l'accroche glisse hors champ à deux vitesses, les picots restent accrochés */
+  .has-motion .hero__line { translate: calc(var(--x, 0) * -18vw) 0; }
+  .has-motion .hero__line--2 { translate: calc(var(--x, 0) * -9vw) 0; }
+
+  /* Cartes photo en 3D : la carte s'incline, les pastilles passent devant,
+     l'ombre de picots recule et se décolle au défilement */
+  .has-motion .hero__media,
+  .has-motion .gallery { perspective: 1400px; }
+  .has-motion [data-tilt] {
+    isolation: auto;
+    transform-style: preserve-3d;
+    transform: rotateX(calc(var(--rx, 0) * 1deg)) rotateY(calc(var(--ry, 0) * 1deg));
+  }
+  .has-motion [data-tilt]::after {
+    transform: translate3d(
+      calc(var(--shift) + var(--lift, 0) * 1px),
+      calc(var(--shift) + var(--lift, 0) * 1px),
+      -60px);
+  }
+  .has-motion .pastille--1 { transform: translateZ(90px) rotate(-4deg); }
+  .has-motion .pastille--2 { transform: translateZ(55px) rotate(3deg); }
+
+  /* Module Sans / Avec : le parquet se redresse en entrant dans l'écran */
+  .has-motion [data-motion~="scene"] {
+    transform-origin: 50% 100%;
+    transform: perspective(1100px) rotateX(calc((1 - var(--s, 1)) * 40deg));
+  }
+
+  /* Escalier des étapes et petits avis : chaque élément a sa vitesse (desktop) */
+  @media (min-width: 64em) {
+    .has-motion [data-motion~="parallax"] { translate: 0 calc(var(--c, 0) * var(--speed, 40) * 1px); }
+    .has-motion .steps__item--1 { --speed: 20; }
+    .has-motion .steps__item--2 { --speed: 55; }
+    .has-motion .steps__item--3 { --speed: 90; }
+    .has-motion .review--a { --speed: 30; }
+    .has-motion .review--b { --speed: 75; }
+  }
+  .has-motion .steps__num::before {
+    translate: calc(.08em + var(--c, 0) * .08em) calc(.08em + var(--c, 0) * .08em);
+  }
+
+  /* Dernier appel et grand logo : ligne à ligne, lettre à lettre, puis les picots */
+  .has-motion .final__line { display: block; }
+  .has-motion .final__line,
+  .has-motion .footer__mark .l {
+    translate: calc((1 - var(--wg, 1)) * var(--from, -1.6em)) 0;
+  }
+  .has-motion .footer__mark .l { display: inline-block; }
+  .has-motion .footer__mark .l { --from: -.8em; }
+  .has-motion .footer__mark .logo__i::after {
+    top: .095em;
+    scale: clamp(0, calc((var(--wg, 1) - .8) * 5), 1.4);
+  }
+
+  /* Galerie : la photo pivote en 3D quand on change de vue, puis accroche */
+  .gallery__slide.is-flip-out { animation: flip-out .2s cubic-bezier(.55, 0, .8, .4) both; }
+  .gallery__slide.is-flip-in { animation: flip-in .5s cubic-bezier(.2, .9, .25, 1.25) both; }
+  @keyframes flip-out {
+    to { transform: perspective(1200px) rotateY(90deg); }
+  }
+  @keyframes flip-in {
+    from { transform: perspective(1200px) rotateY(-90deg); }
+    to { transform: perspective(1200px) rotateY(0deg); }
+  }
+
+  /* Panier : le panneau pivote comme une porte en entrant */
+  .has-motion .cart { perspective: 1800px; }
+  .has-motion .cart__panel {
+    transform-origin: 100% 50%;
+    transform: translateX(100%) rotateY(-16deg);
+  }
+  @media (min-width: 48em) {
+    .has-motion .cart__panel { transform: translateX(calc(100% + var(--gutter))) rotateY(-16deg); }
+  }
+  .has-motion .cart.is-open .cart__panel { transform: none; }
+
+  /* Menu mobile : les liens glissent puis accrochent, l'un après l'autre */
+  @media (max-width: 63.99em) {
+    .has-motion .nav__item,
+    .has-motion .nav__cta {
+      opacity: 0;
+      translate: -2.5rem 0;
+      transition: translate .55s cubic-bezier(.2, 1.35, .35, 1), opacity .25s ease-out;
+    }
+    .has-motion .nav.is-open .nav__item,
+    .has-motion .nav.is-open .nav__cta {
+      opacity: 1;
+      translate: none;
+      transition-delay: calc(.1s + var(--i, 0) * 55ms);
+    }
+  }
+
+  /* Choix : tuiles, tailles, vignettes et boutons changent d'état en douceur */
+  .weight__tile,
+  .size__pill,
+  .thumb,
+  .qty__btn,
+  .cart-btn,
+  .icon-btn,
+  .faq__icon,
+  .btn--secondary {
+    transition: background-color .25s ease-out, color .25s ease-out, box-shadow .2s ease-out;
+  }
+
+  /* FAQ : la réponse se déplie en douceur (navigateurs compatibles, sinon ouverture directe) */
+  @supports (interpolate-size: allow-keywords) {
+    :root { interpolate-size: allow-keywords; }
+    .faq__item::details-content {
+      block-size: 0;
+      overflow: clip;
+      transition: block-size .45s var(--ease-snap), content-visibility .45s allow-discrete;
+    }
+    .faq__item[open]::details-content { block-size: auto; }
   }
 }

@@ -175,12 +175,12 @@
         <!-- Navigation : en ligne sur desktop, plein écran sur mobile -->
         <nav class="nav" id="nav" aria-label="Navigation principale">
           <ul class="nav__list">
-            <li><a class="nav__link" href="#comment-ca-marche">Comment ça marche</a></li>
-            <li><a class="nav__link" href="#acheter">Les tailles</a></li>
-            <li><a class="nav__link" href="#conseils">Conseils</a></li>
-            <li><a class="nav__link" href="#faq">FAQ</a></li>
+            <li class="nav__item" style="--i:0"><a class="nav__link" href="#comment-ca-marche">Comment ça marche</a></li>
+            <li class="nav__item" style="--i:1"><a class="nav__link" href="#acheter">Les tailles</a></li>
+            <li class="nav__item" style="--i:2"><a class="nav__link" href="#conseils">Conseils</a></li>
+            <li class="nav__item" style="--i:3"><a class="nav__link" href="#faq">FAQ</a></li>
           </ul>
-          <div class="nav__cta">
+          <div class="nav__cta" style="--i:4">
             <a class="btn btn--rose btn--primary btn--lg" href="#acheter">Choisir ma taille</a>
             <!-- À VALIDER : prix -->
             <p class="nav__price"><span class="price">14,90&nbsp;€</span> le lot de 4</p>
@@ -207,7 +207,7 @@
     <!-- =========================================================
          3. HERO — panneau rose, trame de picots
          ========================================================= -->
-    <section class="hero panel panel--rose trame" aria-labelledby="hero-title">
+    <section class="hero panel panel--rose trame" aria-labelledby="hero-title" data-motion="hero">
       <div class="hero__grid">
         <div class="hero__text">
           <!-- Un seul H1, deux lignes de tailles très différentes -->
@@ -239,7 +239,7 @@
         </div>
 
         <div class="hero__media">
-          <div class="frame">
+          <div class="frame" data-tilt="hero">
             <!-- Photo à intégrer (pas de lazy-loading dans le hero) :
             <img src="images/chat-roux-chaussettes-anti-derapantes-parquet.jpg" width="1200" height="1500" alt="Chat roux portant des chaussettes anti-dérapantes Mistigrip sur un parquet clair" fetchpriority="high" decoding="async">
             -->
@@ -257,8 +257,14 @@
          4. PROBLÈME ET SOLUTION — fond crème
          ========================================================= -->
     <section class="section problem" id="comment-ca-marche" aria-labelledby="problem-title">
+      <!-- Bandeau des sols lisses : il glisse avec le défilement, jamais tout seul (décoratif) -->
+      <div class="floors" aria-hidden="true" data-motion="floors">
+        <p class="floors__row" data-drift><span>Parquet ciré</span><span class="floors__picot"></span><span>Carrelage</span><span class="floors__picot"></span><span>Stratifié</span><span class="floors__picot"></span><span>Béton ciré</span><span class="floors__picot"></span><span>Marbre</span><span class="floors__picot"></span><span>Parquet ciré</span><span class="floors__picot"></span><span>Carrelage</span><span class="floors__picot"></span><span>Stratifié</span><span class="floors__picot"></span></p>
+        <p class="floors__row floors__row--outline" data-drift><span>Vinyle</span><span class="floors__picot"></span><span>Parquet vitrifié</span><span class="floors__picot"></span><span>Tomettes</span><span class="floors__picot"></span><span>Lino</span><span class="floors__picot"></span><span>Carrelage</span><span class="floors__picot"></span><span>Vinyle</span><span class="floors__picot"></span><span>Parquet vitrifié</span><span class="floors__picot"></span><span>Tomettes</span><span class="floors__picot"></span></p>
+      </div>
+
       <div class="problem__grid">
-        <h2 class="h2 problem__title" id="problem-title">Pourquoi votre chat glisse sur le parquet&nbsp;?</h2>
+        <h2 class="h2 problem__title" id="problem-title" data-motion="glide" data-motion-ref=".problem__grid" data-drift>Pourquoi votre chat glisse sur le parquet&nbsp;?</h2>
 
         <div class="problem__body">
           <ul class="causes">
@@ -288,7 +294,7 @@
           <p>Basculez l’interrupteur pour voir la patte de votre chat sur un parquet ciré.</p>
         </div>
 
-        <div class="compare__scene scene" id="compare-scene" data-state="sans">
+        <div class="compare__scene scene" id="compare-scene" data-state="sans" data-motion="scene">
           <svg viewBox="0 0 640 400" aria-hidden="true" focusable="false">
             <!-- Lames de parquet -->
             <rect class="scene__floor" width="640" height="400"/>
@@ -357,9 +363,9 @@
          5. ACHAT — panneau pêche (id="acheter")
          Étape 1 : le poids choisit la taille. Étape 2 : bloc produit.
          ========================================================= -->
-    <section class="buy panel panel--peche" id="acheter" aria-labelledby="buy-title">
+    <section class="buy panel panel--peche" id="acheter" aria-labelledby="buy-title" data-motion="rise">
       <div class="buy__head">
-        <h2 class="h2" id="buy-title">Quelle taille de chaussettes pour mon chat&nbsp;?</h2>
+        <h2 class="h2" id="buy-title" data-motion="glide" data-drift>Quelle taille de chaussettes pour mon chat&nbsp;?</h2>
         <p class="lead">Pas besoin de mètre ruban&nbsp;: son poids suffit. Indiquez-le, nous présélectionnons la bonne taille.</p>
       </div>
 
@@ -408,7 +414,7 @@
           <div class="product">
             <!-- Galerie : 3 photos, changement uniquement au clic -->
             <div class="gallery">
-              <div class="gallery__main frame frame--soft">
+              <div class="gallery__main frame frame--soft" data-tilt>
                 <!-- <img src="images/lot-4-chaussettes-anti-derapantes-chat.jpg" width="1200" height="1200" alt="Lot de 4 chaussettes anti-dérapantes pour chat Mistigrip posées à plat, picots en silicone visibles" loading="lazy" decoding="async"> -->
                 <div class="ph ph--rose ph--square trame gallery__slide" id="photo-1" role="img" aria-label="Lot de 4 chaussettes anti-dérapantes pour chat Mistigrip posées à plat, picots en silicone visibles">
                   <p class="ph__note"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-photo"/></svg><span>Le lot de 4 chaussettes posé à plat sur fond crème, picots visibles, 1200 × 1200</span></p>
@@ -490,7 +496,7 @@
     <section class="section reviews" id="avis" aria-labelledby="reviews-title">
       <!-- AVIS EXEMPLES : À REMPLACER PAR DE VRAIS AVIS AVANT MISE EN LIGNE -->
       <div class="reviews__grid">
-        <h2 class="h2 reviews__title" id="reviews-title">Ce qu’en disent les chats (et leurs humains)</h2>
+        <h2 class="h2 reviews__title" id="reviews-title" data-motion="glide" data-drift>Ce qu’en disent les chats (et leurs humains)</h2>
 
         <div class="rating">
           <p class="rating__score"><span class="rating__value">4,8</span><span class="rating__max">/5</span></p>
@@ -503,7 +509,7 @@
           <p class="rating__count">Note moyenne sur 126 avis</p>
         </div>
 
-        <figure class="review review--featured">
+        <figure class="review review--featured" data-motion="glide">
           <blockquote class="review__quote">
             <p>«&nbsp;Pistache a 15 ans et n’osait plus traverser le salon. Trois jours après ses premières chaussettes, elle refaisait sa ronde du soir. Elle a même l’air un peu fière.&nbsp;»</p>
           </blockquote>
@@ -513,7 +519,7 @@
           </figcaption>
         </figure>
 
-        <figure class="review review--a">
+        <figure class="review review--a" data-motion="parallax">
           <p class="review__stars"><span class="stars" aria-hidden="true"><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg></span><span class="visually-hidden">5 sur 5</span></p>
           <blockquote class="review__quote">
             <p>«&nbsp;Les deux premiers jours, Gaston a marché comme un cow-boy. Le troisième, il avait oublié qu’il les portait.&nbsp;»</p>
@@ -524,7 +530,7 @@
           </figcaption>
         </figure>
 
-        <figure class="review review--b">
+        <figure class="review review--b" data-motion="parallax">
           <p class="review__stars"><span class="stars" aria-hidden="true"><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon icon--off"><use href="#i-star"/></svg></span><span class="visually-hidden">4 sur 5</span></p>
           <blockquote class="review__quote">
             <p>«&nbsp;Fini les dérapages dans le couloir à 3&nbsp;h du matin. Seul bémol&nbsp;: il a fallu passer en L pour mon gros Moka.&nbsp;»</p>
@@ -540,29 +546,29 @@
     <!-- =========================================================
          7. HABITUATION — panneau jaune
          ========================================================= -->
-    <section class="habits panel panel--jaune" id="conseils" aria-labelledby="habits-title">
+    <section class="habits panel panel--jaune" id="conseils" aria-labelledby="habits-title" data-motion="rise">
       <div class="habits__head">
-        <h2 class="h2" id="habits-title">Habituer son chat à ses chaussettes en 3 étapes</h2>
+        <h2 class="h2" id="habits-title" data-motion="glide" data-drift>Habituer son chat à ses chaussettes en 3 étapes</h2>
         <p class="lead">Aucun chat n’aime qu’on lui impose quoi que ce soit. La bonne méthode&nbsp;: y aller doucement, et le laisser décider du rythme.</p>
       </div>
 
       <ol class="steps">
-        <li class="steps__item">
-          <span class="steps__num" aria-hidden="true">1</span>
+        <li class="steps__item steps__item--1" data-motion="parallax">
+          <span class="steps__num" aria-hidden="true" data-num="1" data-drift>1</span>
           <div class="steps__body">
             <h3 class="h3">Faites les présentations</h3>
             <p>Posez les chaussettes près de son coin préféré. Laissez-le les renifler, offrez une friandise, et c’est tout pour aujourd’hui.</p>
           </div>
         </li>
-        <li class="steps__item steps__item--2">
-          <span class="steps__num" aria-hidden="true">2</span>
+        <li class="steps__item steps__item--2" data-motion="parallax">
+          <span class="steps__num" aria-hidden="true" data-num="2" data-drift>2</span>
           <div class="steps__body">
             <h3 class="h3">Une première séance très courte</h3>
             <p>Enfilez-les quand il est détendu, idéalement après un repas. Deux ou trois minutes suffisent&nbsp;: jouez, récompensez, puis retirez-les.</p>
           </div>
         </li>
-        <li class="steps__item steps__item--3">
-          <span class="steps__num" aria-hidden="true">3</span>
+        <li class="steps__item steps__item--3" data-motion="parallax">
+          <span class="steps__num" aria-hidden="true" data-num="3" data-drift>3</span>
           <div class="steps__body">
             <h3 class="h3">Allongez petit à petit</h3>
             <p>Augmentez la durée au fil des jours, en restant près de lui. Les premiers pas un peu raides sont normaux et passent vite.</p>
@@ -589,7 +595,7 @@
     <section class="section faq" id="faq" aria-labelledby="faq-title">
       <div class="faq__grid">
         <div class="faq__head">
-          <h2 class="h2" id="faq-title">Questions fréquentes</h2>
+          <h2 class="h2" id="faq-title" data-motion="glide" data-motion-ref=".faq__grid" data-drift>Questions fréquentes</h2>
           <!-- À VALIDER : délai de réponse du service client -->
           <p class="faq__contact">Une autre question&nbsp;? <a href="/contact">Écrivez-nous</a>, un humain vous répond sous 24&nbsp;h.</p>
         </div>
@@ -629,8 +635,8 @@
     <!-- =========================================================
          9. DERNIER APPEL — panneau aubergine
          ========================================================= -->
-    <section class="final panel is-dark trame" aria-labelledby="final-text">
-      <p class="final__text" id="final-text">Le parquet reste. Les glissades, elles, prennent la porte.</p>
+    <section class="final panel is-dark trame" aria-labelledby="final-text" data-motion="rise">
+      <p class="final__text" id="final-text" data-motion="stagger" data-drift><span class="final__line">Le parquet reste.</span> <span class="final__line">Les glissades, elles,</span> <span class="final__line">prennent la porte.</span></p>
       <div class="final__buy">
         <a class="btn btn--rose btn--primary btn--lg" href="#acheter">Choisir ma taille</a>
         <!-- À VALIDER : prix et délai d'expédition -->
@@ -696,7 +702,7 @@
       </div>
     </div>
 
-    <p class="footer__mark" aria-hidden="true">M<span class="logo__i">ı</span>st<span class="logo__i">ı</span>gr<span class="logo__i">ı</span>p</p>
+    <p class="footer__mark" aria-hidden="true" data-motion="stagger" data-stagger="reverse" data-drift><span class="l">M</span><span class="l logo__i">ı</span><span class="l">s</span><span class="l">t</span><span class="l logo__i">ı</span><span class="l">g</span><span class="l">r</span><span class="l logo__i">ı</span><span class="l">p</span></p>
     <p class="footer__legal">© 2026 Mistigrip. Pour les chats qui glissent, et leurs humains.</p>
   </footer>
 
