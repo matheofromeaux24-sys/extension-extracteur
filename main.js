@@ -636,14 +636,14 @@
     if (!f || !f.items.length) return;
     var fontSize = parseFloat(window.getComputedStyle(f.strip).fontSize) || 16;
     var padX = parseFloat(window.getComputedStyle(f.bar).left) || 0; // même marge que les panneaux
-    var gap = fontSize * 0.9;
+    var gap = fontSize * 0.8;
     var x = [];
     var w = [];
     var end = 0;
     f.items.forEach(function (it, k) {
       w[k] = it.el.offsetWidth;
       // Chaque mot chevauche la fin du précédent (qui est sur l’autre rangée)…
-      var pos = k === 0 ? 0 : x[k - 1] + w[k - 1] * 0.8;
+      var pos = k === 0 ? 0 : x[k - 1] + w[k - 1] * 0.6;
       // … sans jamais toucher celui d'avant, sur la même rangée
       if (k > 1) pos = Math.max(pos, x[k - 2] + w[k - 2] + gap);
       x[k] = pos;
